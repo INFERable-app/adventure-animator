@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breath of the Child - Opening Sequence & Viewer</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #3b82f6;
+      --text-color: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header & Navigation */
+    header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #090d16;
+      padding: 12px 24px;
+      border-bottom: 1px solid #334155;
+      z-index: 10001;
+      flex-shrink: 0;
+    }
+
+    .title-brand {
+      font-weight: bold;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      color: #60a5fa;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tab-btn {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: #334155;
+      color: #ffffff;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+    }
+
+    /* Tab Views */
+    .tab-content {
+      display: none;
+      flex: 1;
+      position: relative;
+      width: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Player Canvas Container */
+    #player-tab {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #000000;
+      position: relative;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: #000000;
+      overflow: hidden;
+    }
+
+    /* Controls Overlay */
+    .controls-overlay {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 12px 24px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .control-btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .control-btn:hover {
+      background: #1d4ed8;
+    }
+
+    /* Initial Loading Overlay Screen */
+    #loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #090d16;
+      color: #60a5fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #1e293b;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* JSON Viewer Tab */
+    #json-tab {
+      padding: 20px;
+      box-sizing: border-box;
+      background-color: #0f172a;
+    }
+
+    pre {
+      width: 100%;
+      height: 100%;
+      background: #090d16;
+      color: #38edf8;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      overflow: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    /* Vector Sprites & Text Styles */
+    .vector-sprite {
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      position: absolute;
+      z-index: 500;
+    }
+
+    .vector-text {
+      text-align: center;
+      white-space: nowrap;
+      user-select: none;
+    }
+  </style>
+
+  <script>
+    /*
+     * 1. MASTER GAME DATA JSON
+     */
+    const masterGameData = {
+      "id": "toddler_master",
+      "name": "Toddler & Scene Assets",
+      "scale": 1,
+      "pivot": { "x": 0, "y": 120 },
+      "baseParts": {
+        "headShadow": { "zIndex": 1, "fill": "rgba(0,0,0,0.15)", "type": "ellipse", "cx": 0, "cy": 115, "rx": 55, "ry": 12 },
+        "legLeft": { "zIndex": 2, "stroke": "#3b82f6", "strokeWidth": 16, "lineCap": "round", "path": [{ "x": -20, "y": 60 }, { "x": -22, "y": 105 }] },
+        "legRight": { "zIndex": 2, "stroke": "#3b82f6", "strokeWidth": 16, "lineCap": "round", "path": [{ "x": 20, "y": 60 }, { "x": 22, "y": 105 }] },
+        "shoeLeft": { "zIndex": 3, "fill": "#ef4444", "path": [{ "x": -35, "y": 100 }, { "x": -12, "y": 100 }, { "x": -12, "y": 112 }, { "x": -35, "y": 112 }], "radius": 5 },
+        "shoeRight": { "zIndex": 3, "fill": "#ef4444", "path": [{ "x": 12, "y": 100 }, { "x": 35, "y": 100 }, { "x": 35, "y": 112 }, { "x": 12, "y": 112 }], "radius": 5 },
+        "body": { "zIndex": 4, "fill": "#10b981", "stroke": "#047857", "strokeWidth": 3, "path": [{ "x": -30, "y": 0 }, { "x": 30, "y": 0 }, { "x": 26, "y": 65 }, { "x": -26, "y": 65 }] },
+        "shirtDeco": { "zIndex": 5, "fill": "#f59e0b", "type": "star", "cx": 0, "cy": 30, "points": 5, "r1": 12, "r2": 5 },
+        "armLeft": { "zIndex": 3, "stroke": "#e0a96d", "strokeWidth": 12, "lineCap": "round", "lineJoin": "round", "path": [{ "x": -28, "y": 8 }, { "x": -45, "y": 35 }, { "x": -40, "y": 55 }] },
+        "armRight": { "zIndex": 3, "stroke": "#e0a96d", "strokeWidth": 12, "lineCap": "round", "lineJoin": "round", "path": [{ "x": 28, "y": 8 }, { "x": 45, "y": 35 }, { "x": 40, "y": 55 }] },
+        "neck": { "zIndex": 5, "fill": "#d49658", "path": [{ "x": -10, "y": -2 }, { "x": 10, "y": -2 }, { "x": 10, "y": 8 }, { "x": -10, "y": 8 }] },
+        "head": { "zIndex": 6, "fill": "#e0a96d", "stroke": "#c68a4c", "strokeWidth": 2, "type": "circle", "cx": 0, "cy": -45, "r": 42 },
+        "earLeft": { "zIndex": 5, "fill": "#e0a96d", "stroke": "#c68a4c", "strokeWidth": 2, "type": "circle", "cx": -42, "cy": -45, "r": 9 },
+        "earRight": { "zIndex": 5, "fill": "#e0a96d", "stroke": "#c68a4c", "strokeWidth": 2, "type": "circle", "cx": 42, "cy": -45, "r": 9 },
+        "hairBack": { "zIndex": 5, "fill": "#3f2314", "path": [{ "x": -46, "y": -45 }, { "x": -52, "y": -70 }, { "x": 0, "y": -95 }, { "x": 52, "y": -70 }, { "x": 46, "y": -45 }] },
+        "hairCurl1": { "zIndex": 8, "fill": "#3f2314", "type": "circle", "cx": -25, "cy": -82, "r": 16 },
+        "hairCurl2": { "zIndex": 8, "fill": "#3f2314", "type": "circle", "cx": 0, "cy": -88, "r": 18 },
+        "hairCurl3": { "zIndex": 8, "fill": "#3f2314", "type": "circle", "cx": 25, "cy": -82, "r": 16 },
+        "hairCurl4": { "zIndex": 8, "fill": "#3f2314", "type": "circle", "cx": -40, "cy": -68, "r": 14 },
+        "hairCurl5": { "zIndex": 8, "fill": "#3f2314", "type": "circle", "cx": 40, "cy": -68, "r": 14 },
+        "blushLeft": { "zIndex": 7, "fill": "rgba(239, 68, 68, 0.25)", "type": "circle", "cx": -22, "cy": -38, "r": 8 },
+        "blushRight": { "zIndex": 7, "fill": "rgba(239, 68, 68, 0.25)", "type": "circle", "cx": 22, "cy": -38, "r": 8 },
+        "eyeLeft": { "zIndex": 7, "fill": "#1e293b", "type": "circle", "cx": -15, "cy": -48, "r": 5 },
+        "eyeRight": { "zIndex": 7, "fill": "#1e293b", "type": "circle", "cx": 15, "cy": -48, "r": 5 },
+        "pupilLeft": { "zIndex": 8, "fill": "#ffffff", "type": "circle", "cx": -13, "cy": -50, "r": 2 },
+        "pupilRight": { "zIndex": 8, "fill": "#ffffff", "type": "circle", "cx": 17, "cy": -50, "r": 2 },
+        "mouth": { "zIndex": 7, "stroke": "#7c2d12", "strokeWidth": 3, "lineCap": "round", "fill": "transparent", "path": [{ "x": -10, "y": -30 }, { "x": 0, "y": -24 }, { "x": 10, "y": -30 }] },
+        "browLeft": { "zIndex": 7, "stroke": "#3f2314", "strokeWidth": 3, "lineCap": "round", "path": [{ "x": -22, "y": -58 }, { "x": -8, "y": -58 }] },
+        "browRight": { "zIndex": 7, "stroke": "#3f2314", "strokeWidth": 3, "lineCap": "round", "path": [{ "x": 8, "y": -58 }, { "x": 22, "y": -58 }] }
+      },
+      "objects": {
+        "playTentPOV": {
+          "parts": {
+            "tentBg": { "zIndex": 1, "fill": "#3b82f6", "path": [{ "x": -300, "y": -300 }, { "x": 300, "y": -300 }, { "x": 300, "y": 300 }, { "x": -300, "y": 300 }] },
+            "seamLeft": { "zIndex": 2, "stroke": "#1d4ed8", "strokeWidth": 8, "path": [{ "x": 0, "y": -40 }, { "x": -300, "y": -200 }] },
+            "seamRight": { "zIndex": 2, "stroke": "#1d4ed8", "strokeWidth": 8, "path": [{ "x": 0, "y": -40 }, { "x": 300, "y": -200 }] },
+            "seamBottom": { "zIndex": 2, "stroke": "#1d4ed8", "strokeWidth": 8, "path": [{ "x": 0, "y": -40 }, { "x": 0, "y": 300 }] },
+            "apexHub": { "zIndex": 3, "fill": "#f59e0b", "type": "circle", "cx": 0, "cy": -40, "r": 25 },
+            "meshWindow": { "zIndex": 3, "fill": "rgba(255, 255, 255, 0.3)", "stroke": "#f59e0b", "strokeWidth": 4, "type": "circle", "cx": 0, "cy": -120, "r": 45 }
+          }
+        },
+        "blueMatTopView": {
+          "parts": {
+            "matBody": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 6, "path": [{ "x": -100, "y": -180 }, { "x": 100, "y": -180 }, { "x": 100, "y": 180 }, { "x": -100, "y": 180 }], "radius": 15 },
+            "pillow": { "zIndex": 2, "fill": "#93c5fd", "path": [{ "x": -80, "y": -165 }, { "x": 80, "y": -165 }, { "x": 80, "y": -105 }, { "x": -80, "y": -105 }], "radius": 10 }
+          }
+        },
+        "blueMatSideView": {
+          "parts": {
+            "matBase": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 3, "path": [{ "x": -180, "y": 100 }, { "x": 180, "y": 100 }, { "x": 180, "y": 120 }, { "x": -180, "y": 120 }], "radius": 6 },
+            "pillowSide": { "zIndex": 2, "fill": "#93c5fd", "path": [{ "x": 90, "y": 88 }, { "x": 170, "y": 88 }, { "x": 170, "y": 100 }, { "x": 90, "y": 100 }], "radius": 5 }
+          }
+        },
+        "babyMonitor": {
+          "parts": {
+            "handle": { "zIndex": 1, "stroke": "#475569", "strokeWidth": 4, "fill": "transparent", "path": [{ "x": -15, "y": -22 }, { "x": 0, "y": -35 }, { "x": 15, "y": -22 }] },
+            "casing": { "zIndex": 2, "fill": "#334155", "stroke": "#f59e0b", "strokeWidth": 3, "path": [{ "x": -20, "y": -20 }, { "x": 20, "y": -20 }, { "x": 20, "y": 25 }, { "x": -20, "y": 25 }], "radius": 6 },
+            "screen": { "zIndex": 3, "fill": "#38bdf8", "path": [{ "x": -15, "y": -15 }, { "x": 15, "y": -15 }, { "x": 15, "y": 10 }, { "x": -15, "y": 10 }] },
+            "eyeIcon": { "zIndex": 4, "fill": "#0284c7", "type": "circle", "cx": 0, "cy": -2, "r": 5 },
+            "antenna": { "zIndex": 1, "stroke": "#f59e0b", "strokeWidth": 3, "path": [{ "x": 14, "y": -20 }, { "x": 22, "y": -38 }] }
+          }
+        }
+      },
+      "poses": {
+        "topDownLaying": {
+          "headShadow": { "cx": 0, "cy": -60, "rx": 45, "ry": 45 },
+          "head": { "cx": 0, "cy": -60, "r": 42 },
+          "hairBack": { "path": [{ "x": -46, "y": -60 }, { "x": -52, "y": -85 }, { "x": 0, "y": -110 }, { "x": 52, "y": -85 }, { "x": 46, "y": -60 }] },
+          "eyeLeft": { "cx": -15, "cy": -63, "r": 5 },
+          "eyeRight": { "cx": 15, "cy": -63, "r": 5 },
+          "pupilLeft": { "cx": -15, "cy": -63, "r": 0 },
+          "pupilRight": { "cx": 15, "cy": -63, "r": 0 },
+          "browLeft": { "path": [{ "x": -22, "y": -72 }, { "x": -8, "y": -72 }] },
+          "browRight": { "path": [{ "x": 8, "y": -72 }, { "x": 22, "y": -72 }] },
+          "mouth": { "path": [{ "x": -6, "y": -48 }, { "x": 0, "y": -45 }, { "x": 6, "y": -48 }] },
+          "body": { "path": [{ "x": -28, "y": -15 }, { "x": 28, "y": -15 }, { "x": 24, "y": 50 }, { "x": -24, "y": 50 }] },
+          "shirtDeco": { "cx": 0, "cy": 15 },
+          "armLeft": { "path": [{ "x": -26, "y": -8 }, { "x": -40, "y": 15 }, { "x": -35, "y": 40 }] },
+          "armRight": { "path": [{ "x": 26, "y": -8 }, { "x": 40, "y": 15 }, { "x": 35, "y": 40 }] },
+          "legLeft": { "path": [{ "x": -16, "y": 45 }, { "x": -18, "y": 85 }] },
+          "legRight": { "path": [{ "x": 16, "y": 45 }, { "x": 18, "y": 85 }] },
+          "shoeLeft": { "path": [{ "x": -26, "y": 82 }, { "x": -10, "y": 82 }, { "x": -10, "y": 98 }, { "x": -26, "y": 98 }] },
+          "shoeRight": { "path": [{ "x": 10, "y": 82 }, { "x": 26, "y": 82 }, { "x": 26, "y": 98 }, { "x": 10, "y": 98 }] }
+        },
+        "sideViewSitting": {
+          "headShadow": { "cx": 0, "cy": 115, "rx": 35, "ry": 10 },
+          "head": { "cx": -10, "cy": -35, "r": 42 },
+          "earRight": { "cx": 10, "cy": -35, "r": 9 },
+          "earLeft": { "cx": -32, "cy": -35, "r": 0 },
+          "eyeLeft": { "cx": -30, "cy": -38, "r": 5 },
+          "eyeRight": { "cx": -15, "cy": -38, "r": 0 },
+          "pupilLeft": { "cx": -32, "cy": -39, "r": 2 },
+          "pupilRight": { "cx": -15, "cy": -39, "r": 0 },
+          "browLeft": { "path": [{ "x": -36, "y": -48 }, { "x": -22, "y": -48 }] },
+          "body": { "path": [{ "x": -20, "y": 10 }, { "x": 20, "y": 10 }, { "x": 15, "y": 75 }, { "x": -25, "y": 75 }] },
+          "shirtDeco": { "cx": -12, "cy": 38 },
+          "armLeft": { "path": [{ "x": -10, "y": 20 }, { "x": -35, "y": 45 }, { "x": -45, "y": 65 }] },
+          "armRight": { "path": [{ "x": 0, "y": 20 }, { "x": -20, "y": 45 }, { "x": -30, "y": 65 }] },
+          "legLeft": { "path": [{ "x": -10, "y": 70 }, { "x": -50, "y": 75 }] },
+          "legRight": { "path": [{ "x": 5, "y": 70 }, { "x": -35, "y": 80 }] },
+          "shoeLeft": { "path": [{ "x": -68, "y": 65 }, { "x": -45, "y": 65 }, { "x": -45, "y": 82 }, { "x": -68, "y": 82 }] },
+          "shoeRight": { "path": [{ "x": -52, "y": 72 }, { "x": -30, "y": 72 }, { "x": -30, "y": 88 }, { "x": -52, "y": 88 }] }
+        },
+        "sideViewStandingHold": {
+          "headShadow": { "cx": -5, "cy": 115, "rx": 35, "ry": 10 },
+          "head": { "cx": -10, "cy": -45, "r": 42 },
+          "earRight": { "cx": 12, "cy": -45, "r": 9 },
+          "eyeLeft": { "cx": -30, "cy": -48, "r": 5 },
+          "pupilLeft": { "cx": -32, "cy": -49, "r": 2 },
+          "body": { "path": [{ "x": -20, "y": 0 }, { "x": 20, "y": 0 }, { "x": 16, "y": 65 }, { "x": -20, "y": 65 }] },
+          "shirtDeco": { "cx": -12, "cy": 30 },
+          "armLeft": { "path": [{ "x": -8, "y": 12 }, { "x": -38, "y": 20 }, { "x": -48, "y": 30 }] },
+          "armRight": { "path": [{ "x": 5, "y": 12 }, { "x": -25, "y": 22 }, { "x": -35, "y": 32 }] },
+          "legLeft": { "path": [{ "x": -15, "y": 60 }, { "x": -17, "y": 105 }] },
+          "legRight": { "path": [{ "x": 10, "y": 60 }, { "x": 8, "y": 105 }] },
+          "shoeLeft": { "path": [{ "x": -38, "y": 100 }, { "x": -10, "y": 100 }, { "x": -10, "y": 112 }, { "x": -38, "y": 112 }] },
+          "shoeRight": { "path": [{ "x": -15, "y": 100 }, { "x": 15, "y": 100 }, { "x": 15, "y": 112 }, { "x": -15, "y": 112 }] }
+        }
+      }
+    };
+
+    /*
+     * 2. VECTOR RENDERER ENGINE
+     */
+    function renderVectorPose(container, poseOrObject) {
+      if (poseOrObject.type === 'text') {
+        const textDiv = document.createElement('div');
+        textDiv.className = 'vector-text';
+        textDiv.innerText = poseOrObject.text;
+        textDiv.style.fontSize = (poseOrObject.fontSize || 16) + 'px';
+        textDiv.style.color = poseOrObject.color || '#ffffff';
+        textDiv.style.fontFamily = poseOrObject.fontFamily || 'sans-serif';
+        textDiv.style.fontWeight = 'bold';
+        container.appendChild(textDiv);
+        return;
+      }
+
+      // --- PNG Image Support ---
+      if (poseOrObject.type === 'image') {
+        const img = document.createElement('img');
+        img.src = poseOrObject.src;
+        img.style.width = (poseOrObject.width || 600) + 'px';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        container.appendChild(img);
+        return;
+      }
+
+      let partsToRender = {};
+      if (poseOrObject.parts) {
+        partsToRender = poseOrObject.parts;
+      } else {
+        partsToRender = JSON.parse(JSON.stringify(masterGameData.baseParts));
+        for (let key in poseOrObject) {
+          if (partsToRender[key]) {
+            Object.assign(partsToRender[key], poseOrObject[key]);
+          }
+        }
+      }
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", "600");
+      svg.setAttribute("height", "600");
+      svg.setAttribute("viewBox", "-300 -300 600 600");
+
+      const sortedKeys = Object.keys(partsToRender).sort((a, b) => 
+        (partsToRender[a].zIndex || 0) - (partsToRender[b].zIndex || 0)
+      );
+
+      sortedKeys.forEach(key => {
+        const part = partsToRender[key];
+        let elem;
+
+        if (part.type === 'circle') {
+          elem = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          elem.setAttribute("cx", part.cx || 0);
+          elem.setAttribute("cy", part.cy || 0);
+          elem.setAttribute("r", part.r || 0);
+        } else if (part.type === 'ellipse') {
+          elem = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+          elem.setAttribute("cx", part.cx || 0);
+          elem.setAttribute("cy", part.cy || 0);
+          elem.setAttribute("rx", part.rx || 0);
+          elem.setAttribute("ry", part.ry || 0);
+        } else if (part.type === 'star') {
+          elem = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          let pts = [];
+          for (let i = 0; i < part.points * 2; i++) {
+            let r = (i % 2 === 0) ? part.r1 : part.r2;
+            let angle = (i * Math.PI) / part.points;
+            pts.push(`${part.cx + r * Math.sin(angle)},${part.cy - r * Math.cos(angle)}`);
+          }
+          elem.setAttribute("points", pts.join(" "));
+        } else if (part.path) {
+          elem = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          let d = "";
+          if (Array.isArray(part.path)) {
+            d = part.path.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ");
+            if (part.fill && part.fill !== "transparent" && part.fill !== "none") {
+              d += " Z";
+            }
+          } else if (typeof part.path === 'string') {
+            d = part.path;
+          }
+          elem.setAttribute("d", d);
+        }
+
+        if (elem) {
+          elem.setAttribute("fill", part.fill || "none");
+          elem.setAttribute("stroke", part.stroke || "none");
+          elem.setAttribute("stroke-width", part.strokeWidth || 0);
+          if (part.lineCap) elem.setAttribute("stroke-linecap", part.lineCap);
+          if (part.lineJoin) elem.setAttribute("stroke-linejoin", part.lineJoin);
+          svg.appendChild(elem);
+        }
+      });
+
+      container.appendChild(svg);
+    }
+
+    /*
+     * 3. PLAYER HELPER & FADE API
+     */
+    const activeSprites = new Map();
+    let spriteIdCounter = 0;
+
+    function fadeIn(pose, x, y, seconds) {
+      const spriteId = 'sprite_' + (++spriteIdCounter);
+      const spriteNode = document.createElement('div');
+      spriteNode.id = spriteId;
+      spriteNode.className = 'vector-sprite';
+      spriteNode.style.left = `${x}px`;
+      spriteNode.style.top = `${y}px`;
+      spriteNode.style.opacity = '0';
+      spriteNode.style.transition = `opacity ${seconds}s ease-in-out`;
+
+      renderVectorPose(spriteNode, pose);
+      document.getElementById('canvas-container').appendChild(spriteNode);
+
+      requestAnimationFrame(() => {
+        spriteNode.style.opacity = '1';
+      });
+
+      activeSprites.set(spriteId, spriteNode);
+      return spriteId;
+    }
+
+    function fadeOut(spriteId, seconds) {
+      const spriteNode = activeSprites.get(spriteId);
+      if (!spriteNode) return;
+
+      spriteNode.style.transition = `opacity ${seconds}s ease-in-out`;
+      spriteNode.style.opacity = '0';
+
+      setTimeout(() => {
+        if (spriteNode.parentNode) {
+          spriteNode.parentNode.removeChild(spriteNode);
+        }
+        activeSprites.delete(spriteId);
+      }, seconds * 1000);
+    }
+
+    function canvasFadeTo(color, seconds) {
+      let overlay = document.getElementById('canvas-fade-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'canvas-fade-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '100';
+        document.getElementById('canvas-container').appendChild(overlay);
+      }
+
+      overlay.style.transition = `background-color ${seconds}s ease-in-out`;
+      overlay.style.backgroundColor = color;
+    }
+
+    const wait = (sec) => new Promise(resolve => setTimeout(resolve, sec * 1000));
+
+    function clearCanvas() {
+      activeSprites.forEach((node, id) => {
+        if (node && node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      });
+      activeSprites.clear();
+    }
+
+    function createTextObject(textString, fontSize = 16) {
+      return { type: 'text', text: textString, fontSize: fontSize, color: '#ffffff' };
+    }
+
+    function createImageObject(srcPath, width = 600) {
+      return { type: 'image', src: srcPath, width: width };
+    }
+
+    /*
+     * 4. ANIMATION SEQUENCE SCRIPT
+     */
+    async function playOpeningSequence() {
+      clearCanvas();
+
+      const container = document.getElementById('canvas-container');
+      const centerX = container.clientWidth / 2;
+      const centerY = container.clientHeight / 2;
+
+      // Step 1: Black Canvas
+      canvasFadeTo('black', 0);
+      await wait(0.5);
+
+      // Step 2: INFERable Presents
+      const title1 = fadeIn(createTextObject("INFERable Presents"), centerX, centerY, 3.0);
+      await wait(1.8);
+      fadeOut(title1, 3.0);
+      await wait(3.0);
+
+      // Step 3: Breath of the Child
+      const title2 = fadeIn(createTextObject("Breath of the Child", 16), centerX, centerY, 3.0);
+      await wait(3.0);
+      fadeOut(title2, 0.8);
+      await wait(1.0);
+
+      // Step 4: Lens Flare PNG Image
+      const flareId = fadeIn(createImageObject('IMG_1148.png', 800), centerX, centerY, 1.5);
+      await wait(1.2);
+
+      // Step 5: "...Open your eyes..."
+      const subtitle1 = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 120, 1.2);
+      await wait(2.2);
+
+      // Step 6: Fade Canvas to White
+      canvasFadeTo('white', 1.2);
+      await wait(1.2);
+
+      fadeOut(flareId, 0);
+      fadeOut(subtitle1, 0);
+
+      // Step 7: POV Tent Interior
+      const tentPovId = fadeIn(masterGameData.objects.playTentPOV, centerX, centerY, 1.2);
+      canvasFadeTo('transparent', 1.2);
+      await wait(2.5);
+
+      // Step 8: Cut to Top Down Laying View
+      fadeOut(tentPovId, 0);
+      const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
+      const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
+      await wait(3.0);
+
+      // Step 9: "Wake up." Text
+      const subtitle2 = fadeIn(createTextObject("Wake up.", 16), centerX, container.clientHeight - 120, 3.0);
+      await wait(3.0);
+
+      // Step 10: 2D Side Sitting View
+      fadeOut(topMatId, 0);
+      fadeOut(toddlerLayingId, 0);
+      fadeOut(subtitle2, 0);
+
+      const sideMatId = fadeIn(masterGameData.objects.blueMatSideView, centerX, centerY + 50, 0);
+      const toddlerSittingId = fadeIn(masterGameData.poses.sideViewSitting, centerX, centerY + 59, 0);
+      const monitorFloorId = fadeIn(masterGameData.objects.babyMonitor, centerX - 60, centerY + 119, 0);
+      await wait(2.5);
+
+      // Step 11: 2D Side Standing View holding Monitor
+      fadeOut(toddlerSittingId, 0);
+      fadeOut(monitorFloorId, 0);
+
+      const toddlerStandingId = fadeIn(masterGameData.poses.sideViewStandingHold, centerX, centerY + 35, 0);
+      const monitorHandId = fadeIn(masterGameData.objects.babyMonitor, centerX - 42, centerY + 50, 0);
+    }
+
+    /*
+     * 5. TAB SWITCHING & SETUP
+     */
+    function switchTab(tabId, evt) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      if (evt && evt.target) {
+        evt.target.classList.add('active');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('json-display').textContent = JSON.stringify(masterGameData, null, 2);
+
+      // Wait 2 animation frames for browser to paint layout before hiding loader and starting sequence
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const loader = document.getElementById('loading-overlay');
+          if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 500);
+          }
+          playOpeningSequence();
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+
+  <!-- Header / Tab Bar -->
+  <header>
+    <div class="title-brand">Breath of the Child - Sequence Player</div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('player-tab', event)">Animation Player</button>
+      <button class="tab-btn" onclick="switchTab('json-tab', event)">JSON Source</button>
+    </div>
+  </header>
+
+  <!-- TAB 1: Animation Player -->
+  <div id="player-tab" class="tab-content active">
+    <!-- Initial Loading Overlay -->
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div>Loading Sequence...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div class="controls-overlay">
+      <button class="control-btn" onclick="playOpeningSequence()">Replay Sequence</button>
+    </div>
+  </div>
+
+  <!-- TAB 2: JSON Source Viewer -->
+  <div id="json-tab" class="tab-content">
+    <pre><code id="json-display">Loading JSON Data...</code></pre>
+  </div>
+
+</body>
+</html>

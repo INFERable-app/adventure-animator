@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D Vector Character Animation Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111827;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+    /* JSON Code Editor styling */
+    #json-editor {
+      font-family: 'Courier New', Courier, monospace;
+      tab-size: 2;
+    }
+    .canvas-container {
+      background-color: #1a202c;
+      background-image: 
+        radial-gradient(#2d3748 1px, transparent 1px),
+        radial-gradient(#2d3748 1px, #1a202c 1px);
+      background-size: 20px 20px;
+      background-position: 0 0, 10px 10px;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-slate-950 text-slate-100">
+
+  <!-- Header / Top Navigation -->
+  <header class="h-14 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 z-10 shrink-0 backdrop-blur-md">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-indigo-600/30 rounded-lg text-indigo-400 border border-indigo-500/30">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+          VectorAnimator 2D
+        </h1>
+        <p class="text-xs text-slate-400 hidden sm:block">JSON-Driven Hierarchical Vector Rig & Animation Engine</p>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+      <button id="tab-scene" class="flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium bg-indigo-600 text-white transition-all">
+        <i data-lucide="clapperboard" class="w-3.5 h-3.5"></i>
+        <span>Featured Scene</span>
+      </button>
+      <button id="tab-gallery" class="flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 transition-all">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+        <span>Sprite Gallery</span>
+      </button>
+    </div>
+
+    <!-- Audio Toggle -->
+    <div class="flex items-center space-x-2">
+      <button id="btn-audio-toggle" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
+        <i data-lucide="volume-2" id="icon-audio" class="w-4 h-4 text-emerald-400"></i>
+        <span id="label-audio">Audio ON</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Left / Center: Canvas Display & Stage Controls -->
+    <div class="flex-1 flex flex-col bg-slate-950/50 relative border-r border-slate-800/80 min-w-0">
+      
+      <!-- Canvas Container -->
+      <div class="flex-1 relative flex items-center justify-center p-4 overflow-hidden canvas-container">
+        <canvas id="main-canvas" class="rounded-xl shadow-2xl border border-slate-800/80 bg-slate-900/90 max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"></canvas>
+
+        <!-- Dynamic Overlay / HUD Info -->
+        <div class="absolute top-6 left-6 pointer-events-none flex flex-col space-y-1">
+          <div id="hud-status" class="px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 text-xs font-semibold text-indigo-400 backdrop-blur-md w-max shadow-lg flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="hud-status-text">Scene: The Fly Swatter Chase</span>
+          </div>
+          <div id="hud-subtext" class="text-xs text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/40 w-max">
+            Frame: 0 | Action: Idle
+          </div>
+        </div>
+
+        <!-- Wireframe & Render Options Overlay Controls -->
+        <div class="absolute top-6 right-6 flex items-center space-x-2 bg-slate-900/80 border border-slate-800/80 p-1.5 rounded-xl backdrop-blur-md shadow-lg">
+          <button id="btn-toggle-wireframe" title="Toggle Vector Points & Outlines" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="git-commit" class="w-4 h-4"></i>
+          </button>
+          <button id="btn-toggle-interpolate" title="Toggle Smooth Frame Interpolation" class="p-2 rounded-lg text-emerald-400 bg-slate-800/80 border border-emerald-500/30 transition">
+            <i data-lucide="move" class="w-4 h-4"></i>
+          </button>
+          <button id="btn-reset-view" title="Reset Canvas View" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline & Main Animation Controls Bar -->
+      <div class="h-28 bg-slate-900/90 border-t border-slate-800 px-4 py-3 flex flex-col justify-between shrink-0 backdrop-blur-md">
+        
+        <!-- Timeline Slider -->
+        <div class="flex items-center space-x-3">
+          <span id="time-current" class="text-xs font-mono text-slate-400 w-10 text-right">0.00s</span>
+          <div class="flex-1 relative flex items-center">
+            <input type="range" id="timeline-scrubber" min="0" max="100" value="0" step="0.1" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400">
+          </div>
+          <span id="time-total" class="text-xs font-mono text-slate-400 w-10">0.00s</span>
+        </div>
+
+        <!-- Control Buttons & Settings -->
+        <div class="flex items-center justify-between">
+          
+          <!-- Playback Actions -->
+          <div class="flex items-center space-x-2">
+            <button id="btn-play-pause" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-indigo-600/20 flex items-center space-x-2 transition active:scale-95">
+              <i data-lucide="play" id="icon-play" class="w-4 h-4"></i>
+              <span id="label-play">Play</span>
+            </button>
+            <button id="btn-prev-frame" title="Previous Frame" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition active:scale-95 border border-slate-700">
+              <i data-lucide="skip-back" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-next-frame" title="Next Frame" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition active:scale-95 border border-slate-700">
+              <i data-lucide="skip-forward" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-restart" title="Restart Animation" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition active:scale-95 border border-slate-700">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Scene Sequence Selector (when in Scene Mode) -->
+          <div id="scene-sequence-controls" class="flex items-center space-x-2">
+            <span class="text-xs text-slate-400 hidden xl:inline">Scene Sequence:</span>
+            <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="0">1. Miss Slap</button>
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="1">2. Fly Right</button>
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="2">3. Turn & Swatter</button>
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="3">4. Walk Right</button>
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="4">5. Swat!</button>
+              <button class="btn-seq border-0 px-2 py-1 rounded text-slate-300 hover:text-white" data-step="5">6. Victory!</button>
+            </div>
+          </div>
+
+          <!-- Playback Speed & Options -->
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1.5">
+              <i data-lucide="gauge" class="w-3.5 h-3.5 text-slate-400"></i>
+              <select id="select-speed" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+            </div>
+
+            <button id="btn-loop-toggle" class="p-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium flex items-center space-x-1 transition" title="Toggle Looping">
+              <i data-lucide="repeat" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar: JSON Editor & Pose/Action Inspector -->
+    <aside class="w-96 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0">
+      
+      <!-- Sidebar Header -->
+      <div class="h-12 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 bg-slate-900/50">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="code-2" class="w-4 h-4 text-indigo-400"></i>
+          <span class="text-xs font-bold tracking-wider uppercase text-slate-300">Vector Data Inspector</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button id="btn-apply-json" title="Apply JSON Changes" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow transition">
+            Apply
+          </button>
+          <button id="btn-reset-json" title="Reset Default JSON" class="p-1 text-slate-400 hover:text-white transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Character/Sprite Selector -->
+      <div class="p-3 border-b border-slate-800/80 bg-slate-950/40 flex items-center justify-between">
+        <label class="text-xs font-medium text-slate-400">Target Rig:</label>
+        <select id="select-active-sprite" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-48">
+          <option value="toddler">Sprite #1: Toddler & Swatter</option>
+          <option value="mosquito">Sprite #2: Mosquito</option>
+        </select>
+      </div>
+
+      <!-- Action / Pose Quick Switcher -->
+      <div class="p-3 border-b border-slate-800/80 bg-slate-950/20 flex flex-col space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400">Action / Pose:</span>
+          <span id="label-action-type" class="text-indigo-400 font-mono text-[11px]">Sequence</span>
+        </div>
+        <select id="select-active-action" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- JSON Live Code Editor -->
+      <div class="flex-1 relative flex flex-col min-h-0">
+        <div class="bg-slate-950 px-3 py-1 text-[11px] font-mono text-slate-500 border-b border-slate-800/60 flex items-center justify-between">
+          <span>JSON DEFINITION</span>
+          <span id="json-status" class="text-emerald-400">Valid</span>
+        </div>
+        <textarea id="json-editor" spellcheck="false" class="flex-1 w-full bg-slate-950 p-3 text-xs font-mono text-indigo-200 focus:outline-none resize-none leading-relaxed overflow-y-auto selection:bg-indigo-900"></textarea>
+      </div>
+
+      <!-- Quick Vector Controls / Info Footer -->
+      <div class="p-3 border-t border-slate-800 bg-slate-950/60 text-xs text-slate-400 flex justify-between items-center">
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span id="part-count">Parts: 0</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="spline" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span id="vector-points-count">Points: 0</span>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- JavaScript Implementation -->
+  <script>
+    /* ==========================================================================
+       1. DEFAULT VECTOR SPRITE DATA DEFINITIONS (JSON)
+       ========================================================================== */
+    
+    // TODDLER SPRITE DATA WITH SIDE PROFILE & FLY SWATTER PARTS
+    const TODDLER_DATA = {
+      id: "toddler",
+      name: "Toddler & Swatter",
+      scale: 1.0,
+      pivot: { x: 0, y: 120 },
+      parts: {
+        // Head shadow / aura
+        headShadow: { zIndex: 1, color: "rgba(0,0,0,0.15)", type: "ellipse", cx: 0, cy: 115, rx: 55, ry: 12 },
+        // Legs
+        legLeft: { zIndex: 2, stroke: "#3b82f6", strokeWidth: 16, lineCap: "round", path: [{x: -20, y: 60}, {x: -22, y: 105}] },
+        legRight: { zIndex: 2, stroke: "#3b82f6", strokeWidth: 16, lineCap: "round", path: [{x: 20, y: 60}, {x: 22, y: 105}] },
+        // Shoes
+        shoeLeft: { zIndex: 3, fill: "#ef4444", path: [{x: -35, y: 100}, {x: -12, y: 100}, {x: -12, y: 112}, {x: -35, y: 112}], radius: 5 },
+        shoeRight: { zIndex: 3, fill: "#ef4444", path: [{x: 12, y: 100}, {x: 35, y: 100}, {x: 35, y: 112}, {x: 12, y: 112}], radius: 5 },
+        // Body / Shirt
+        body: { zIndex: 4, fill: "#10b981", stroke: "#047857", strokeWidth: 3, path: [{x: -30, y: 0}, {x: 30, y: 0}, {x: 26, y: 65}, {x: -26, y: 65}] },
+        shirtDeco: { zIndex: 5, fill: "#f59e0b", type: "star", cx: 0, cy: 30, points: 5, r1: 12, r2: 5 },
+        // Arms
+        armLeft: { zIndex: 3, stroke: "#e0a96d", strokeWidth: 12, lineCap: "round", lineJoin: "round", path: [{x: -28, y: 8}, {x: -45, y: 35}, {x: -40, y: 55}] },
+        armRight: { zIndex: 3, stroke: "#e0a96d", strokeWidth: 12, lineCap: "round", lineJoin: "round", path: [{x: 28, y: 8}, {x: 45, y: 35}, {x: 40, y: 55}] },
+        // Head & Neck
+        neck: { zIndex: 5, fill: "#d49658", path: [{x: -10, y: -2}, {x: 10, y: -2}, {x: 10, y: 8}, {x: -10, y: 8}] },
+        head: { zIndex: 6, fill: "#e0a96d", stroke: "#c68a4c", strokeWidth: 2, type: "circle", cx: 0, cy: -45, r: 42 },
+        // Ears
+        earLeft: { zIndex: 5, fill: "#e0a96d", stroke: "#c68a4c", strokeWidth: 2, type: "circle", cx: -42, cy: -45, r: 9 },
+        earRight: { zIndex: 5, fill: "#e0a96d", stroke: "#c68a4c", strokeWidth: 2, type: "circle", cx: 42, cy: -45, r: 9 },
+        // Hair (Dark brown curls)
+        hairBack: { zIndex: 5, fill: "#3f2314", path: [{x: -46, y: -45}, {x: -52, y: -70}, {x: 0, y: -95}, {x: 52, y: -70}, {x: 46, y: -45}] },
+        hairCurl1: { zIndex: 8, fill: "#3f2314", type: "circle", cx: -25, cy: -82, r: 16 },
+        hairCurl2: { zIndex: 8, fill: "#3f2314", type: "circle", cx: 0, cy: -88, r: 18 },
+        hairCurl3: { zIndex: 8, fill: "#3f2314", type: "circle", cx: 25, cy: -82, r: 16 },
+        hairCurl4: { zIndex: 8, fill: "#3f2314", type: "circle", cx: -40, cy: -68, r: 14 },
+        hairCurl5: { zIndex: 8, fill: "#3f2314", type: "circle", cx: 40, cy: -68, r: 14 },
+        // Cheeks
+        blushLeft: { zIndex: 7, fill: "rgba(239, 68, 68, 0.25)", type: "circle", cx: -22, cy: -38, r: 8 },
+        blushRight: { zIndex: 7, fill: "rgba(239, 68, 68, 0.25)", type: "circle", cx: 22, cy: -38, r: 8 },
+        // Eyes
+        eyeLeft: { zIndex: 7, fill: "#1e293b", type: "circle", cx: -15, cy: -48, r: 5 },
+        eyeRight: { zIndex: 7, fill: "#1e293b", type: "circle", cx: 15, cy: -48, r: 5 },
+        pupilLeft: { zIndex: 8, fill: "#ffffff", type: "circle", cx: -13, cy: -50, r: 2 },
+        pupilRight: { zIndex: 8, fill: "#ffffff", type: "circle", cx: 17, cy: -50, r: 2 },
+        // Mouth
+        mouth: { zIndex: 7, stroke: "#7c2d12", strokeWidth: 3, lineCap: "round", fill: "transparent", path: [{x: -10, y: -30}, {x: 0, y: -24}, {x: 10, y: -30}] },
+        // Eyebrows
+        browLeft: { zIndex: 7, stroke: "#3f2314", strokeWidth: 3, lineCap: "round", path: [{x: -22, y: -58}, {x: -8, y: -58}] },
+        browRight: { zIndex: 7, stroke: "#3f2314", strokeWidth: 3, lineCap: "round", path: [{x: 8, y: -58}, {x: 22, y: -58}] },
+        
+        // Fly Swatter Parts (Attached to Hand in Right-Facing Poses)
+        swatterHandle: { zIndex: 12, stroke: "#2563eb", strokeWidth: 5, lineCap: "round", hidden: true, path: [{x: 25, y: 35}, {x: 45, y: -25}] },
+        swatterHead: { zIndex: 11, fill: "rgba(239, 68, 68, 0.7)", stroke: "#b91c1c", strokeWidth: 2, hidden: true, path: [{x: 32, y: -25}, {x: 62, y: -25}, {x: 58, y: -75}, {x: 28, y: -75}] },
+        swatterGrid1: { zIndex: 12, stroke: "rgba(255,255,255,0.7)", strokeWidth: 1.5, hidden: true, path: [{x: 42, y: -25}, {x: 38, y: -75}] },
+        swatterGrid2: { zIndex: 12, stroke: "rgba(255,255,255,0.7)", strokeWidth: 1.5, hidden: true, path: [{x: 52, y: -25}, {x: 48, y: -75}] },
+        swatterGrid3: { zIndex: 12, stroke: "rgba(255,255,255,0.7)", strokeWidth: 1.5, hidden: true, path: [{x: 30, y: -42}, {x: 60, y: -42}] },
+        swatterGrid4: { zIndex: 12, stroke: "rgba(255,255,255,0.7)", strokeWidth: 1.5, hidden: true, path: [{x: 29, y: -58}, {x: 59, y: -58}] }
+      },
+
+      // Positional offsets / overrides per pose
+      poses: {
+        idle: {
+          armLeft: { path: [{x: -28, y: 8}, {x: -42, y: 30}, {x: -38, y: 52}] },
+          armRight: { path: [{x: 28, y: 8}, {x: 42, y: 30}, {x: 38, y: 52}] },
+          eyeLeft: { cx: -15, cy: -48 },
+          eyeRight: { cx: 15, cy: -48 },
+          pupilLeft: { cx: -14, cy: -49 },
+          pupilRight: { cx: 16, cy: -49 },
+          mouth: { path: [{x: -8, y: -28}, {x: 0, y: -23}, {x: 8, y: -28}] }
+        },
+        lookUp: {
+          eyeLeft: { cx: -15, cy: -52, r: 6 },
+          eyeRight: { cx: 15, cy: -52, r: 6 },
+          pupilLeft: { cx: -15, cy: -55, r: 2.5 },
+          pupilRight: { cx: 15, cy: -55, r: 2.5 },
+          browLeft: { path: [{x: -22, y: -64}, {x: -8, y: -60}] },
+          browRight: { path: [{x: 8, y: -60}, {x: 22, y: -64}] },
+          mouth: { path: [{x: -5, y: -25}, {x: 0, y: -27}, {x: 5, y: -25}] }
+        },
+        windup: {
+          armRight: { path: [{x: 28, y: 8}, {x: 55, y: -20}, {x: 40, y: -65}] },
+          armLeft: { path: [{x: -28, y: 8}, {x: -45, y: 35}, {x: -40, y: 55}] },
+          eyeLeft: { cx: -15, cy: -54, r: 6 },
+          eyeRight: { cx: 15, cy: -54, r: 6 },
+          pupilLeft: { cx: -13, cy: -56 },
+          pupilRight: { cx: 17, cy: -56 },
+          browLeft: { path: [{x: -22, y: -64}, {x: -8, y: -58}] },
+          browRight: { path: [{x: 8, y: -58}, {x: 22, y: -64}] },
+          mouth: { path: [{x: -8, y: -22}, {x: 0, y: -26}, {x: 8, y: -22}] }
+        },
+        slapImpact: {
+          armRight: { path: [{x: 28, y: 8}, {x: 25, y: -50}, {x: 0, y: -85}] },
+          head: { cx: 0, cy: -42 },
+          eyeLeft: { cx: -15, cy: -46, r: 4 },
+          eyeRight: { cx: 15, cy: -46, r: 4 },
+          browLeft: { path: [{x: -22, y: -50}, {x: -8, y: -54}] },
+          browRight: { path: [{x: 8, y: -54}, {x: 22, y: -50}] },
+          mouth: { path: [{x: -12, y: -24}, {x: 0, y: -18}, {x: 12, y: -24}] }
+        },
+
+        // --- NEW RIGHT-FACING & SWATTER POSES ---
+        turnRight: {
+          head: { cx: 10, cy: -45, r: 40 },
+          eyeLeft: { cx: 18, cy: -48, r: 5 },
+          eyeRight: { cx: 32, cy: -48, r: 4 },
+          pupilLeft: { cx: 20, cy: -49, r: 2 },
+          pupilRight: { cx: 34, cy: -49, r: 2 },
+          earLeft: { cx: -28, cy: -45, r: 9 },
+          earRight: { hidden: true },
+          mouth: { path: [{x: 20, y: -28}, {x: 28, y: -24}, {x: 32, y: -28}] },
+          browLeft: { path: [{x: 12, y: -58}, {x: 24, y: -58}] },
+          browRight: { path: [{x: 28, y: -58}, {x: 38, y: -58}] },
+          body: { path: [{x: -20, y: 0}, {x: 20, y: 0}, {x: 18, y: 65}, {x: -18, y: 65}] },
+          shirtDeco: { cx: 10, cy: 30 },
+          // Equip Fly Swatter
+          swatterHandle: { hidden: false, path: [{x: 25, y: 35}, {x: 45, y: -25}] },
+          swatterHead: { hidden: false, path: [{x: 32, y: -25}, {x: 62, y: -25}, {x: 58, y: -75}, {x: 28, y: -75}] },
+          swatterGrid1: { hidden: false, path: [{x: 42, y: -25}, {x: 38, y: -75}] },
+          swatterGrid2: { hidden: false, path: [{x: 52, y: -25}, {x: 48, y: -75}] },
+          swatterGrid3: { hidden: false, path: [{x: 30, y: -42}, {x: 60, y: -42}] },
+          swatterGrid4: { hidden: false, path: [{x: 29, y: -58}, {x: 59, y: -58}] },
+          armRight: { path: [{x: 10, y: 8}, {x: 28, y: 25}, {x: 25, y: 35}] }
+        },
+        sideWalk1: {
+          head: { cx: 10, cy: -45, r: 40 },
+          eyeLeft: { cx: 20, cy: -48, r: 5 },
+          eyeRight: { cx: 34, cy: -48, r: 4 },
+          pupilLeft: { cx: 22, cy: -49 },
+          pupilRight: { cx: 36, cy: -49 },
+          earLeft: { cx: -28, cy: -45, r: 9 },
+          earRight: { hidden: true },
+          body: { path: [{x: -20, y: 0}, {x: 20, y: 0}, {x: 18, y: 65}, {x: -18, y: 65}] },
+          legLeft: { path: [{x: -10, y: 60}, {x: -28, y: 105}] },
+          legRight: { path: [{x: 10, y: 60}, {x: 32, y: 105}] },
+          shoeLeft: { path: [{x: -42, y: 100}, {x: -18, y: 100}, {x: -18, y: 112}, {x: -42, y: 112}] },
+          shoeRight: { path: [{x: 18, y: 100}, {x: 45, y: 100}, {x: 45, y: 112}, {x: 18, y: 112}] },
+          armRight: { path: [{x: 10, y: 8}, {x: 32, y: 20}, {x: 35, y: 35}] },
+          armLeft: { path: [{x: -10, y: 8}, {x: -25, y: 30}, {x: -20, y: 50}] },
+          swatterHandle: { hidden: false, path: [{x: 35, y: 35}, {x: 55, y: -25}] },
+          swatterHead: { hidden: false, path: [{x: 42, y: -25}, {x: 72, y: -25}, {x: 68, y: -75}, {x: 38, y: -75}] },
+          swatterGrid1: { hidden: false, path: [{x: 52, y: -25}, {x: 48, y: -75}] },
+          swatterGrid2: { hidden: false, path: [{x: 62, y: -25}, {x: 58, y: -75}] },
+          swatterGrid3: { hidden: false, path: [{x: 40, y: -42}, {x: 70, y: -42}] },
+          swatterGrid4: { hidden: false, path: [{x: 39, y: -58}, {x: 69, y: -58}] }
+        },
+        sideWalk2: {
+          head: { cx: 10, cy: -45, r: 40 },
+          eyeLeft: { cx: 20, cy: -48, r: 5 },
+          eyeRight: { cx: 34, cy: -48, r: 4 },
+          pupilLeft: { cx: 22, cy: -49 },
+          pupilRight: { cx: 36, cy: -49 },
+          earLeft: { cx: -28, cy: -45, r: 9 },
+          earRight: { hidden: true },
+          body: { path: [{x: -20, y: 0}, {x: 20, y: 0}, {x: 18, y: 65}, {x: -18, y: 65}] },
+          legLeft: { path: [{x: -10, y: 60}, {x: 28, y: 105}] },
+          legRight: { path: [{x: 10, y: 60}, {x: -25, y: 105}] },
+          shoeLeft: { path: [{x: 14, y: 100}, {x: 42, y: 100}, {x: 42, y: 112}, {x: 14, y: 112}] },
+          shoeRight: { path: [{x: -38, y: 100}, {x: -12, y: 100}, {x: -12, y: 112}, {x: -38, y: 112}] },
+          armRight: { path: [{x: 10, y: 8}, {x: 25, y: 15}, {x: 20, y: 35}] },
+          armLeft: { path: [{x: -10, y: 8}, {x: -15, y: 30}, {x: -10, y: 50}] },
+          swatterHandle: { hidden: false, path: [{x: 20, y: 35}, {x: 40, y: -25}] },
+          swatterHead: { hidden: false, path: [{x: 27, y: -25}, {x: 57, y: -25}, { x: 53, y: -75 }, { x: 23, y: -75 }] },
+          swatterGrid1: { hidden: false, path: [{x: 37, y: -25}, {x: 33, y: -75}] },
+          swatterGrid2: { hidden: false, path: [{x: 47, y: -25}, {x: 43, y: -75}] },
+          swatterGrid3: { hidden: false, path: [{x: 25, y: -42}, {x: 55, y: -42}] },
+          swatterGrid4: { hidden: false, path: [{x: 24, y: -58}, {x: 54, y: -58}] }
+        },
+        sideWindupSwat: {
+          head: { cx: 10, cy: -45, r: 40 },
+          eyeLeft: { cx: 20, cy: -50, r: 6 },
+          eyeRight: { cx: 34, cy: -50, r: 5 },
+          pupilLeft: { cx: 22, cy: -52 },
+          pupilRight: { cx: 36, cy: -52 },
+          earLeft: { cx: -28, cy: -45, r: 9 },
+          earRight: { hidden: true },
+          browLeft: { path: [{x: 12, y: -64}, {x: 24, y: -60}] },
+          browRight: { path: [{x: 28, y: -60}, {x: 38, y: -64}] },
+          armRight: { path: [{x: 10, y: 8}, {x: -20, y: -30}, {x: -45, y: -80}] },
+          swatterHandle: { hidden: false, path: [{x: -45, y: -80}, {x: -85, y: -130}] },
+          swatterHead: { hidden: false, path: [{x: -95, y: -125}, {x: -70, y: -140}, {x: -100, y: -185}, {x: -125, y: -170}] },
+          swatterGrid1: { hidden: false, path: [{x: -88, y: -130}, {x: -110, y: -175}] },
+          swatterGrid2: { hidden: false, path: [{x: -78, y: -135}, {x: -100, y: -180}] },
+          swatterGrid3: { hidden: false, path: [{x: -88, y: -142}, {x: -102, y: -134}] },
+          swatterGrid4: { hidden: false, path: [{x: -98, y: -158}, {x: -112, y: -150}] }
+        },
+        sideSwatImpact: {
+          head: { cx: 10, cy: -40, r: 40 },
+          eyeLeft: { cx: 20, cy: -44, r: 4 },
+          eyeRight: { cx: 34, cy: -44, r: 3 },
+          pupilLeft: { cx: 22, cy: -44 },
+          pupilRight: { cx: 36, cy: -44 },
+          earLeft: { cx: -28, cy: -40, r: 9 },
+          earRight: { hidden: true },
+          mouth: { path: [{x: 18, y: -20}, {x: 28, y: -14}, {x: 34, y: -20}] },
+          armRight: { path: [{x: 10, y: 8}, {x: 50, y: 15}, {x: 85, y: 25}] },
+          swatterHandle: { hidden: false, path: [{x: 85, y: 25}, {x: 145, y: 15}] },
+          swatterHead: { hidden: false, path: [{x: 145, y: 35}, {x: 145, y: -15}, {x: 195, y: -15}, {x: 195, y: 35}] },
+          swatterGrid1: { hidden: false, path: [{x: 160, y: 35}, {x: 160, y: -15}] },
+          swatterGrid2: { hidden: false, path: [{x: 180, y: 35}, {x: 180, y: -15}] },
+          swatterGrid3: { hidden: false, path: [{x: 145, y: 0}, {x: 195, y: 0}] },
+          swatterGrid4: { hidden: false, path: [{x: 145, y: 18}, {x: 195, y: 18}] }
+        },
+        sideVictory: {
+          head: { cx: 10, cy: -45, r: 40 },
+          eyeLeft: { cx: 20, cy: -48, r: 5 },
+          eyeRight: { cx: 34, cy: -48, r: 4 },
+          pupilLeft: { cx: 22, cy: -50 },
+          pupilRight: { cx: 36, cy: -50 },
+          earLeft: { cx: -28, cy: -45, r: 9 },
+          earRight: { hidden: true },
+          mouth: { path: [{x: 18, y: -28}, {x: 28, y: -20}, {x: 34, y: -28}] },
+          armRight: { path: [{x: 10, y: 8}, {x: 35, y: -30}, {x: 25, y: -70}] },
+          swatterHandle: { hidden: false, path: [{x: 25, y: -70}, {x: 15, y: -125}] },
+          swatterHead: { hidden: false, path: [{x: -5, y: -125}, {x: 35, y: -125}, {x: 30, y: -175}, {x: -10, y: -175}] },
+          swatterGrid1: { hidden: false, path: [{x: 5, y: -125}, {x: 0, y: -175}] },
+          swatterGrid2: { hidden: false, path: [{x: 20, y: -125}, {x: 15, y: -175}] },
+          swatterGrid3: { hidden: false, path: [{x: -2, y: -140}, {x: 32, y: -140}] },
+          swatterGrid4: { hidden: false, path: [{x: -6, y: -160}, {x: 28, y: -160}] }
+        }
+      },
+
+      // Actions (Sequence of frames with durations)
+      actions: {
+        idle: {
+          loop: true,
+          frames: [
+            { pose: "idle", duration: 600, translateY: 0 },
+            { pose: "idle", duration: 600, translateY: -3 }
+          ]
+        },
+        walkRight: {
+          loop: true,
+          frames: [
+            { pose: "sideWalk1", duration: 250 },
+            { pose: "sideWalk2", duration: 250 }
+          ]
+        },
+        swatterSlapSequence: {
+          loop: false,
+          frames: [
+            { pose: "turnRight", duration: 600 },
+            { pose: "sideWalk1", duration: 300 },
+            { pose: "sideWalk2", duration: 300 },
+            { pose: "sideWindupSwat", duration: 500 },
+            { pose: "sideSwatImpact", duration: 300 },
+            { pose: "sideVictory", duration: 1000 }
+          ]
+        }
+      }
+    };
+
+    // MOSQUITO SPRITE DATA
+    const MOSQUITO_DATA = {
+      id: "mosquito",
+      name: "Mosquito",
+      scale: 0.8,
+      pivot: { x: 0, y: 0 },
+      parts: {
+        // Legs
+        leg1: { zIndex: 1, stroke: "#1e293b", strokeWidth: 2, lineCap: "round", path: [{x: -5, y: 5}, {x: -15, y: 15}, {x: -20, y: 25}] },
+        leg2: { zIndex: 1, stroke: "#1e293b", strokeWidth: 2, lineCap: "round", path: [{x: 0, y: 5}, {x: -2, y: 18}, {x: -5, y: 28}] },
+        leg3: { zIndex: 1, stroke: "#1e293b", strokeWidth: 2, lineCap: "round", path: [{x: 5, y: 5}, {x: 12, y: 16}, {x: 18, y: 26}] },
+        // Abdomen & Thorax
+        abdomen: { zIndex: 2, fill: "#dc2626", stroke: "#7f1d1d", strokeWidth: 1.5, type: "ellipse", cx: 18, cy: -5, rx: 16, ry: 8, rotation: -0.2 },
+        stripes: { zIndex: 3, stroke: "#f87171", strokeWidth: 2, path: [{x: 12, y: -11}, {x: 10, y: 1}], path2: [{x: 20, y: -12}, {x: 18, y: 0}] },
+        thorax: { zIndex: 4, fill: "#334155", type: "circle", cx: 0, cy: 0, r: 9 },
+        head: { zIndex: 5, fill: "#0f172a", type: "circle", cx: -10, cy: 0, r: 6 },
+        eye: { zIndex: 6, fill: "#ef4444", type: "circle", cx: -12, cy: -2, r: 3 },
+        // Sharp long Proboscis
+        proboscis: { zIndex: 5, stroke: "#0f172a", strokeWidth: 2, lineCap: "round", path: [{x: -15, y: 1}, {x: -35, y: 8}] },
+        // Translucent Wings
+        wingLeft: { zIndex: 7, fill: "rgba(191, 219, 254, 0.65)", stroke: "#93c5fd", strokeWidth: 1, path: [{x: -2, y: -6}, {x: -15, y: -35}, {x: 5, y: -30}] },
+        wingRight: { zIndex: 7, fill: "rgba(191, 219, 254, 0.65)", stroke: "#93c5fd", strokeWidth: 1, path: [{x: 2, y: -6}, {x: 15, y: -35}, {x: 25, y: -25}] }
+      },
+      poses: {
+        flyWingUp: {
+          wingLeft: { path: [{x: -2, y: -6}, {x: -20, y: -42}, {x: 2, y: -35}] },
+          wingRight: { path: [{x: 2, y: -6}, {x: 10, y: -42}, {x: 28, y: -30}] }
+        },
+        flyWingDown: {
+          wingLeft: { path: [{x: -2, y: -6}, {x: -25, y: -12}, {x: -10, y: -5}] },
+          wingRight: { path: [{x: 2, y: -6}, {x: 5, y: -12}, {x: 20, y: -5}] }
+        },
+        landed: {
+          wingLeft: { path: [{x: -2, y: -6}, {x: 12, y: -8}, {x: 22, y: -2}] },
+          wingRight: { path: [{x: 2, y: -6}, {x: 18, y: -10}, {x: 26, y: -4}] },
+          leg1: { path: [{x: -5, y: 5}, {x: -12, y: 10}, {x: -16, y: 12}] },
+          leg2: { path: [{x: 0, y: 5}, {x: -2, y: 10}, {x: -4, y: 12}] },
+          leg3: { path: [{x: 5, y: 5}, {x: 10, y: 10}, {x: 14, y: 12}] }
+        },
+        dizzy: {
+          rotation: 3.14,
+          wingLeft: { path: [{x: -2, y: -6}, {x: -10, y: -20}, {x: -5, y: -15}] },
+          wingRight: { path: [{x: 2, y: -6}, {x: 10, y: -20}, {x: 15, y: -15}] }
+        },
+        squished: {
+          abdomen: { cx: 10, cy: 15, rx: 18, ry: 4, rotation: 0 },
+          thorax: { cx: -5, cy: 15, r: 6 },
+          head: { cx: -15, cy: 15, r: 4 },
+          wingLeft: { path: [{x: -2, y: 15}, {x: -20, y: 10}, {x: -15, y: 20}] },
+          wingRight: { path: [{x: 2, y: 15}, {x: 18, y: 10}, {x: 22, y: 20}] },
+          eye: { fill: "#f59e0b" }
+        }
+      },
+      actions: {
+        hovering: {
+          loop: true,
+          frames: [
+            { pose: "flyWingUp", duration: 60, translateY: -2 },
+            { pose: "flyWingDown", duration: 60, translateY: 2 }
+          ]
+        },
+        landed: {
+          loop: true,
+          frames: [
+            { pose: "landed", duration: 500 }
+          ]
+        },
+        dizzyFly: {
+          loop: true,
+          frames: [
+            { pose: "dizzy", duration: 100, translateY: 0 },
+            { pose: "flyWingUp", duration: 100, translateY: 5 }
+          ]
+        }
+      }
+    };
+
+    /* ==========================================================================
+       2. WEB AUDIO SYNTHESIZER
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.buzzOsc = null;
+        this.buzzGain = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+
+      // Continuous mosquito buzz sound
+      startBuzz() {
+        if (!this.enabled) return;
+        this.init();
+        if (this.buzzOsc) return;
+
+        this.buzzOsc = this.ctx.createOscillator();
+        this.buzzGain = this.ctx.createGain();
+
+        this.buzzOsc.type = 'sawtooth';
+        this.buzzOsc.frequency.setValueAtTime(480, this.ctx.currentTime);
+
+        const lfo = this.ctx.createOscillator();
+        lfo.frequency.setValueAtTime(38, this.ctx.currentTime);
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.setValueAtTime(35, this.ctx.currentTime);
+        lfo.connect(this.buzzOsc.frequency);
+        lfo.start();
+
+        this.buzzGain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+
+        this.buzzOsc.connect(this.buzzGain);
+        this.buzzGain.connect(this.ctx.destination);
+        this.buzzOsc.start();
+      }
+
+      stopBuzz() {
+        if (this.buzzOsc) {
+          try {
+            this.buzzGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
+            setTimeout(() => {
+              if (this.buzzOsc) {
+                this.buzzOsc.stop();
+                this.buzzOsc.disconnect();
+                this.buzzOsc = null;
+              }
+            }, 100);
+          } catch(e) {}
+        }
+      }
+
+      // Crisp Slap WHACK sound effect
+      playSlapSound() {
+        if (!this.enabled) return;
+        this.init();
+
+        const bufferSize = this.ctx.sampleRate * 0.15;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'highpass';
+        noiseFilter.frequency.setValueAtTime(700, this.ctx.currentTime);
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.ctx.destination);
+
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.12);
+
+        oscGain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
+        osc.connect(oscGain);
+        oscGain.connect(this.ctx.destination);
+
+        noise.start();
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
+      }
+
+      // Swatter Swing Whoosh Sound Effect
+      playWhooshSound() {
+        if (!this.enabled) return;
+        this.init();
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.3);
+
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.3);
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* ==========================================================================
+       3. HIERARCHICAL VECTOR RENDER ENGINE
+       ========================================================================== */
+    class VectorRenderer {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.showWireframe = false;
+        this.interpolate = true;
+      }
+
+      // Deep interpolate vector values between two pose states
+      interpolatePoses(baseParts, poseA, poseB, factor) {
+        const resultParts = JSON.parse(JSON.stringify(baseParts));
+        if (!poseA || !poseB) return resultParts;
+
+        for (const partKey in resultParts) {
+          const basePart = resultParts[partKey];
+          const partA = poseA[partKey] || {};
+          const partB = poseB[partKey] || {};
+
+          // Interpolate Path Coordinates
+          if (basePart.path && (partA.path || partB.path)) {
+            const pA = partA.path || basePart.path;
+            const pB = partB.path || basePart.path;
+            basePart.path = basePart.path.map((pt, idx) => {
+              const ptA = pA[idx] || pt;
+              const ptB = pB[idx] || pt;
+              return {
+                x: ptA.x + (ptB.x - ptA.x) * factor,
+                y: ptA.y + (ptB.y - ptA.y) * factor
+              };
+            });
+          }
+
+          // Interpolate Center X/Y / Radius
+          if (basePart.cx !== undefined) {
+            const cxA = partA.cx !== undefined ? partA.cx : basePart.cx;
+            const cxB = partB.cx !== undefined ? partB.cx : basePart.cx;
+            basePart.cx = cxA + (cxB - cxA) * factor;
+          }
+          if (basePart.cy !== undefined) {
+            const cyA = partA.cy !== undefined ? partA.cy : basePart.cy;
+            const cyB = partB.cy !== undefined ? partB.cy : basePart.cy;
+            basePart.cy = cyA + (cyB - cyA) * factor;
+          }
+          if (basePart.r !== undefined) {
+            const rA = partA.r !== undefined ? partA.r : basePart.r;
+            const rB = partB.r !== undefined ? partB.r : basePart.r;
+            basePart.r = rA + (rB - rA) * factor;
+          }
+        }
+        return resultParts;
+      }
+
+      // Main Vector Drawer for single part
+      drawPart(part) {
+        if (part.hidden) return; // Hidden part check
+
+        const ctx = this.ctx;
+        ctx.save();
+
+        if (part.fill) ctx.fillStyle = part.fill;
+        if (part.stroke) ctx.strokeStyle = part.stroke;
+        if (part.strokeWidth) ctx.lineWidth = part.strokeWidth;
+        if (part.lineCap) ctx.lineCap = part.lineCap;
+        if (part.lineJoin) ctx.lineJoin = part.lineJoin;
+
+        // Primitive Shapes: Circle / Ellipse / Star
+        if (part.type === 'circle') {
+          ctx.beginPath();
+          ctx.arc(part.cx, part.cy, part.r, 0, Math.PI * 2);
+          if (part.fill && part.fill !== 'transparent') ctx.fill();
+          if (part.stroke) ctx.stroke();
+        } 
+        else if (part.type === 'ellipse') {
+          ctx.beginPath();
+          ctx.ellipse(part.cx, part.cy, part.rx, part.ry, part.rotation || 0, 0, Math.PI * 2);
+          if (part.fill && part.fill !== 'transparent') ctx.fill();
+          if (part.stroke) ctx.stroke();
+        } 
+        else if (part.type === 'star') {
+          ctx.beginPath();
+          for (let i = 0; i < part.points * 2; i++) {
+            const r = (i % 2 === 0) ? part.r1 : part.r2;
+            const angle = (i * Math.PI) / part.points;
+            const x = part.cx + Math.cos(angle) * r;
+            const y = part.cy + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          if (part.fill) ctx.fill();
+          if (part.stroke) ctx.stroke();
+        } 
+        // Vector Path Drawing
+        else if (part.path && part.path.length > 0) {
+          ctx.beginPath();
+          ctx.moveTo(part.path[0].x, part.path[0].y);
+
+          if (part.path.length === 3 && !part.fill) {
+            ctx.quadraticCurveTo(part.path[1].x, part.path[1].y, part.path[2].x, part.path[2].y);
+          } else {
+            for (let i = 1; i < part.path.length; i++) {
+              ctx.lineTo(part.path[i].x, part.path[i].y);
+            }
+          }
+
+          if (part.fill && part.fill !== 'transparent') {
+            ctx.closePath();
+            ctx.fill();
+          }
+          if (part.stroke) ctx.stroke();
+        }
+
+        // Render Wireframe Vector Points if Toggled
+        if (this.showWireframe) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.fillStyle = '#fde047';
+          ctx.lineWidth = 1;
+
+          if (part.path) {
+            part.path.forEach(pt => {
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            });
+          }
+          if (part.cx !== undefined && part.cy !== undefined) {
+            ctx.beginPath();
+            ctx.arc(part.cx, part.cy, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // Draw entire hierarchical sprite
+      renderSprite(spriteData, poseNameOrData, posX = 0, posY = 0, rotation = 0, scale = 1) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(posX, posY);
+        ctx.rotate(rotation);
+        ctx.scale(scale * (spriteData.scale || 1), scale * (spriteData.scale || 1));
+
+        let activeParts = JSON.parse(JSON.stringify(spriteData.parts));
+        let poseData = typeof poseNameOrData === 'string' ? spriteData.poses[poseNameOrData] : poseNameOrData;
+
+        if (poseData) {
+          for (const key in poseData) {
+            if (activeParts[key]) {
+              Object.assign(activeParts[key], poseData[key]);
+            }
+          }
+        }
+
+        const sortedParts = Object.values(activeParts).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+        sortedParts.forEach(part => this.drawPart(part));
+
+        if (this.showWireframe) {
+          ctx.strokeStyle = '#3b82f6';
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       4. FEATURED SCENE & ANIMATION SYSTEM
+       ========================================================================== */
+    class AnimationStudio {
+      constructor() {
+        this.canvas = document.getElementById('main-canvas');
+        this.renderer = new VectorRenderer(this.canvas);
+
+        this.sprites = {
+          toddler: TODDLER_DATA,
+          mosquito: MOSQUITO_DATA
+        };
+
+        this.mode = 'scene';
+        this.activeSpriteKey = 'toddler';
+        this.activeActionKey = 'swatterSlapSequence';
+
+        this.isPlaying = true;
+        this.isLooping = true;
+        this.playbackSpeed = 1.0;
+        this.currentTime = 0;
+        this.lastTimestamp = 0;
+
+        // Extended 6-stage Scene Timeline
+        this.sceneStep = 0;
+        this.sceneDuration = 9000; // 9.0 seconds timeline
+        this.slapImpactEffects = [];
+
+        this.view = { x: 0, y: 0, scale: 1 };
+
+        this.initCanvasSize();
+        this.bindEvents();
+        this.updateInspectorUI();
+
+        requestAnimationFrame((ts) => this.loop(ts));
+      }
+
+      initCanvasSize() {
+        const container = this.canvas.parentElement;
+        this.canvas.width = Math.min(container.clientWidth - 32, 900);
+        this.canvas.height = Math.min(container.clientHeight - 32, 550);
+        this.view.x = this.canvas.width / 2 - 80; // Offset view slightly left to give room on right
+        this.view.y = this.canvas.height / 2 + 50;
+      }
+
+      // Feature Routine: Calculate Toddler & Mosquito coordinates & poses across 9-second sequence
+      updateSceneState(deltaMs) {
+        this.currentTime += deltaMs * this.playbackSpeed;
+        if (this.currentTime >= this.sceneDuration) {
+          if (this.isLooping) {
+            this.currentTime = 0;
+            sound.stopBuzz();
+          } else {
+            this.currentTime = this.sceneDuration;
+            this.isPlaying = false;
+          }
+        }
+
+        // Stage 1: Hand Slap Attempt & Miss (0ms - 1800ms)
+        if (this.currentTime < 1800) {
+          this.sceneStep = 0;
+          sound.startBuzz();
+        }
+        // Stage 2: Mosquito Escapes & Flies Right (1800ms - 3000ms)
+        else if (this.currentTime < 3000) {
+          this.sceneStep = 1;
+          sound.startBuzz();
+        }
+        // Stage 3: Toddler Turns Right & Equips Fly Swatter (3000ms - 4200ms)
+        else if (this.currentTime < 4200) {
+          this.sceneStep = 2;
+          sound.startBuzz();
+        }
+        // Stage 4: Toddler Walks Right Towards Mosquito (4200ms - 6600ms)
+        else if (this.currentTime < 6600) {
+          this.sceneStep = 3;
+          sound.startBuzz();
+        }
+        // Stage 5: Windup & SWAT IMPACT! (6600ms - 7500ms)
+        else if (this.currentTime < 7500) {
+          if (this.sceneStep !== 4 && this.currentTime > 7000) {
+            sound.playWhooshSound();
+            sound.playSlapSound();
+            this.triggerSlapParticleEffect(250, -5);
+          }
+          this.sceneStep = 4;
+          sound.stopBuzz();
+        }
+        // Stage 6: Victory & Mosquito Flat on Floor (7500ms - 9000ms)
+        else {
+          this.sceneStep = 5;
+          sound.stopBuzz();
+        }
+
+        // Update Scrubber & HUD
+        const scrubber = document.getElementById('timeline-scrubber');
+        scrubber.value = (this.currentTime / this.sceneDuration) * 100;
+        document.getElementById('time-current').textContent = (this.currentTime / 1000).toFixed(2) + 's';
+        document.getElementById('time-total').textContent = (this.sceneDuration / 1000).toFixed(2) + 's';
+
+        // Highlight Active Sequence Button
+        document.querySelectorAll('.btn-seq').forEach((btn, idx) => {
+          if (idx === this.sceneStep) {
+            btn.className = "btn-seq border-0 px-2 py-1 rounded bg-indigo-600 text-white font-semibold shadow";
+          } else {
+            btn.className = "btn-seq border-0 px-2 py-1 rounded text-slate-400 hover:text-white";
+          }
+        });
+      }
+
+      // Visual Vector Impact Splash Particle Stars
+      triggerSlapParticleEffect(originX = 0, originY = -130) {
+        this.slapImpactEffects = [];
+        for (let i = 0; i < 14; i++) {
+          const angle = (Math.PI * 2 * i) / 14;
+          const speed = 5 + Math.random() * 6;
+          this.slapImpactEffects.push({
+            x: originX,
+            y: originY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            size: 6 + Math.random() * 6
+          });
+        }
+      }
+
+      renderSlapParticles(ctx) {
+        this.slapImpactEffects.forEach((p) => {
+          if (p.life <= 0) return;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.fillStyle = `rgba(251, 191, 36, ${p.life})`;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * p.life, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 0.04;
+        });
+      }
+
+      // Main Feature Scene Render Loop
+      renderScene() {
+        const ctx = this.renderer.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        ctx.save();
+        ctx.translate(this.view.x, this.view.y);
+
+        // Ground Floor Line Shadow
+        ctx.fillStyle = "rgba(15, 23, 42, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(100, 115, 220, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        let toddlerPose = "idle";
+        let mosquitoPose = "flyWingUp";
+        let toddlerX = 0;
+        let mosqX = 0, mosqY = 0, mosqRot = 0;
+
+        const t = this.currentTime;
+
+        // Stage 1: Initial Hand Slap Attempt (0ms - 1800ms)
+        if (t < 1800) {
+          toddlerX = 0;
+          if (t < 800) {
+            toddlerPose = "lookUp";
+            mosquitoPose = Math.floor(t / 80) % 2 === 0 ? "flyWingUp" : "flyWingDown";
+            mosqX = -80 + (t / 800) * 80;
+            mosqY = -180 + (t / 800) * 50;
+          } else if (t < 1400) {
+            toddlerPose = "windup";
+            mosquitoPose = "landed";
+            mosqX = 0;
+            mosqY = -130;
+          } else {
+            toddlerPose = "slapImpact"; // Hand slaps head, mosquito escapes!
+            mosquitoPose = "flyWingUp";
+            mosqX = 40;
+            mosqY = -160;
+          }
+        } 
+        // Stage 2: Mosquito Escapes & Flies to Right Side (1800ms - 3000ms)
+        else if (t < 3000) {
+          const factor = (t - 1800) / 1200;
+          toddlerX = 0;
+          toddlerPose = "lookUp";
+          mosquitoPose = Math.floor(t / 70) % 2 === 0 ? "flyWingUp" : "flyWingDown";
+          mosqX = 40 + factor * 210; // Flies to X = 250
+          mosqY = -160 + Math.sin(factor * Math.PI * 2) * 30 - factor * 20;
+        } 
+        // Stage 3: Toddler Turns Right & Equips Fly Swatter (3000ms - 4200ms)
+        else if (t < 4200) {
+          toddlerX = 0;
+          toddlerPose = "turnRight";
+          mosquitoPose = Math.floor(t / 90) % 2 === 0 ? "flyWingUp" : "flyWingDown";
+          mosqX = 250 + Math.sin(t * 0.005) * 15;
+          mosqY = -110 + Math.cos(t * 0.008) * 15;
+        } 
+        // Stage 4: Toddler Walks Right Towards Mosquito (4200ms - 6600ms)
+        else if (t < 6600) {
+          const walkFactor = (t - 4200) / 2400;
+          toddlerX = walkFactor * 130; // Walks from 0 to 130
+          toddlerPose = Math.floor(t / 200) % 2 === 0 ? "sideWalk1" : "sideWalk2";
+          mosquitoPose = Math.floor(t / 80) % 2 === 0 ? "flyWingUp" : "flyWingDown";
+          mosqX = 250 + Math.sin(t * 0.006) * 10;
+          mosqY = -100 + Math.cos(t * 0.007) * 10;
+        } 
+        // Stage 5: Toddler Winds Up & SWAT IMPACT! (6600ms - 7500ms)
+        else if (t < 7500) {
+          toddlerX = 130;
+          if (t < 7000) {
+            toddlerPose = "sideWindupSwat";
+            mosquitoPose = "flyWingUp";
+            mosqX = 250;
+            mosqY = -90;
+          } else {
+            toddlerPose = "sideSwatImpact"; // Swatter slaps mosquito!
+            mosquitoPose = "squished";
+            mosqX = 250;
+            mosqY = 5;
+          }
+        } 
+        // Stage 6: Victory & Mosquito Flattened on Floor (7500ms - 9000ms)
+        else {
+          toddlerX = 130;
+          toddlerPose = "sideVictory";
+          mosquitoPose = "squished";
+          mosqX = 250;
+          mosqY = 90;
+        }
+
+        // Render Toddler Vector Rig
+        this.renderer.renderSprite(this.sprites.toddler, toddlerPose, toddlerX, 0);
+
+        // Render Slap Visual Particle Effects
+        this.renderSlapParticles(ctx);
+
+        // Render Mosquito Vector Rig
+        this.renderer.renderSprite(this.sprites.mosquito, mosquitoPose, mosqX, mosqY, mosqRot);
+
+        ctx.restore();
+      }
+
+      // Single Sprite Gallery Preview Mode
+      renderGallery() {
+        const ctx = this.renderer.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        ctx.save();
+        ctx.translate(this.canvas.width / 2, this.canvas.height / 2 + 50);
+
+        const sprite = this.sprites[this.activeSpriteKey];
+        const action = sprite.actions[this.activeActionKey];
+
+        if (action && action.frames) {
+          let totalDuration = action.frames.reduce((sum, f) => sum + (f.duration || 300), 0);
+          let frameTime = this.currentTime % totalDuration;
+          let accum = 0;
+          let activeFrame = action.frames[0];
+          let nextFrame = action.frames[0];
+          let frameFactor = 0;
+
+          for (let i = 0; i < action.frames.length; i++) {
+            const dur = action.frames[i].duration || 300;
+            if (frameTime >= accum && frameTime < accum + dur) {
+              activeFrame = action.frames[i];
+              nextFrame = action.frames[(i + 1) % action.frames.length];
+              frameFactor = (frameTime - accum) / dur;
+              break;
+            }
+            accum += dur;
+          }
+
+          let interpolatedPose = activeFrame.pose;
+          if (this.renderer.interpolate && sprite.poses[activeFrame.pose] && sprite.poses[nextFrame.pose]) {
+            interpolatedPose = this.renderer.interpolatePoses(
+              sprite.parts,
+              sprite.poses[activeFrame.pose],
+              sprite.poses[nextFrame.pose],
+              frameFactor
+            );
+          }
+
+          const translateY = activeFrame.translateY || 0;
+          this.renderer.renderSprite(sprite, interpolatedPose, 0, translateY);
+        } else if (sprite.poses[this.activeActionKey]) {
+          this.renderer.renderSprite(sprite, this.activeActionKey, 0, 0);
+        }
+
+        ctx.restore();
+      }
+
+      loop(timestamp) {
+        if (!this.lastTimestamp) this.lastTimestamp = timestamp;
+        const delta = timestamp - this.lastTimestamp;
+        this.lastTimestamp = timestamp;
+
+        if (this.isPlaying) {
+          if (this.mode === 'scene') {
+            this.updateSceneState(delta);
+          } else {
+            this.currentTime += delta * this.playbackSpeed;
+          }
+        }
+
+        if (this.mode === 'scene') {
+          this.renderScene();
+        } else {
+          this.renderGallery();
+        }
+
+        requestAnimationFrame((ts) => this.loop(ts));
+      }
+
+      // Synchronize Inspector UI & Code Editor with selected Sprite/Action
+      updateInspectorUI() {
+        const sprite = this.sprites[this.activeSpriteKey];
+        const actionSelect = document.getElementById('select-active-action');
+        actionSelect.innerHTML = '';
+
+        const actionGroup = document.createElement('optgroup');
+        actionGroup.label = "Actions (Sequences)";
+        Object.keys(sprite.actions).forEach(actKey => {
+          const opt = document.createElement('option');
+          opt.value = actKey;
+          opt.textContent = `Action: ${actKey}`;
+          actionGroup.appendChild(opt);
+        });
+        actionSelect.appendChild(actionGroup);
+
+        const poseGroup = document.createElement('optgroup');
+        poseGroup.label = "Poses (Single Frame)";
+        Object.keys(sprite.poses).forEach(poseKey => {
+          const opt = document.createElement('option');
+          opt.value = poseKey;
+          opt.textContent = `Pose: ${poseKey}`;
+          poseGroup.appendChild(opt);
+        });
+        actionSelect.appendChild(poseGroup);
+
+        if (sprite.actions[this.activeActionKey] || sprite.poses[this.activeActionKey]) {
+          actionSelect.value = this.activeActionKey;
+        } else {
+          this.activeActionKey = Object.keys(sprite.actions)[0] || Object.keys(sprite.poses)[0];
+          actionSelect.value = this.activeActionKey;
+        }
+
+        document.getElementById('json-editor').value = JSON.stringify(sprite, null, 2);
+
+        const partKeys = Object.keys(sprite.parts);
+        let totalPts = 0;
+        partKeys.forEach(k => {
+          const p = sprite.parts[k];
+          if (p.path) totalPts += p.path.length;
+          else totalPts += 1;
+        });
+        document.getElementById('part-count').textContent = `Parts: ${partKeys.length}`;
+        document.getElementById('vector-points-count').textContent = `Points: ${totalPts}`;
+      }
+
+      // UI Event Binding
+      bindEvents() {
+        window.addEventListener('resize', () => this.initCanvasSize());
+
+        document.getElementById('tab-scene').addEventListener('click', () => {
+          this.mode = 'scene';
+          this.currentTime = 0;
+          this.isPlaying = true;
+          document.getElementById('tab-scene').className = "flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium bg-indigo-600 text-white transition-all";
+          document.getElementById('tab-gallery').className = "flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 transition-all";
+          document.getElementById('scene-sequence-controls').style.display = 'flex';
+          document.getElementById('hud-status-text').textContent = "Scene: The Fly Swatter Chase";
+        });
+
+        document.getElementById('tab-gallery').addEventListener('click', () => {
+          this.mode = 'gallery';
+          this.currentTime = 0;
+          this.isPlaying = true;
+          sound.stopBuzz();
+          document.getElementById('tab-gallery').className = "flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium bg-indigo-600 text-white transition-all";
+          document.getElementById('tab-scene').className = "flex items-center space-x-1 px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 transition-all";
+          document.getElementById('scene-sequence-controls').style.display = 'none';
+          document.getElementById('hud-status-text').textContent = "Gallery: Vector Rig Previewer";
+        });
+
+        document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+          sound.enabled = !sound.enabled;
+          const label = document.getElementById('label-audio');
+          const icon = document.getElementById('icon-audio');
+          if (sound.enabled) {
+            label.textContent = "Audio ON";
+            icon.className = "w-4 h-4 text-emerald-400";
+          } else {
+            label.textContent = "Muted";
+            icon.className = "w-4 h-4 text-slate-500";
+            sound.stopBuzz();
+          }
+        });
+
+        document.getElementById('btn-play-pause').addEventListener('click', () => {
+          this.isPlaying = !this.isPlaying;
+          const label = document.getElementById('label-play');
+          const icon = document.getElementById('icon-play');
+          if (this.isPlaying) {
+            label.textContent = "Pause";
+            icon.setAttribute('data-lucide', 'pause');
+          } else {
+            label.textContent = "Play";
+            icon.setAttribute('data-lucide', 'play');
+            sound.stopBuzz();
+          }
+          lucide.createIcons();
+        });
+
+        document.getElementById('timeline-scrubber').addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          this.currentTime = (val / 100) * this.sceneDuration;
+        });
+
+        document.getElementById('select-speed').addEventListener('change', (e) => {
+          this.playbackSpeed = parseFloat(e.target.value);
+        });
+
+        // Step buttons for 6 sequence stages
+        document.querySelectorAll('.btn-seq').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const step = parseInt(e.target.getAttribute('data-step'));
+            const stepTimes = [0, 1900, 3100, 4300, 6700, 7600];
+            this.currentTime = stepTimes[step];
+          });
+        });
+
+        document.getElementById('btn-toggle-wireframe').addEventListener('click', (e) => {
+          this.renderer.showWireframe = !this.renderer.showWireframe;
+          e.currentTarget.classList.toggle('bg-indigo-600/30');
+          e.currentTarget.classList.toggle('text-indigo-400');
+        });
+
+        document.getElementById('btn-toggle-interpolate').addEventListener('click', (e) => {
+          this.renderer.interpolate = !this.renderer.interpolate;
+          e.currentTarget.classList.toggle('opacity-50');
+        });
+
+        document.getElementById('select-active-sprite').addEventListener('change', (e) => {
+          this.activeSpriteKey = e.target.value;
+          this.updateInspectorUI();
+        });
+
+        document.getElementById('select-active-action').addEventListener('change', (e) => {
+          this.activeActionKey = e.target.value;
+          this.currentTime = 0;
+        });
+
+        document.getElementById('btn-apply-json').addEventListener('click', () => {
+          const jsonText = document.getElementById('json-editor').value;
+          const statusLabel = document.getElementById('json-status');
+          try {
+            const parsed = JSON.parse(jsonText);
+            this.sprites[this.activeSpriteKey] = parsed;
+            statusLabel.textContent = "Valid & Applied";
+            statusLabel.className = "text-emerald-400";
+            this.updateInspectorUI();
+          } catch(err) {
+            statusLabel.textContent = "JSON Error!";
+            statusLabel.className = "text-rose-400 font-bold";
+          }
+        });
+
+        document.getElementById('btn-reset-json').addEventListener('click', () => {
+          if (this.activeSpriteKey === 'toddler') {
+            this.sprites.toddler = JSON.parse(JSON.stringify(TODDLER_DATA));
+          } else {
+            this.sprites.mosquito = JSON.parse(JSON.stringify(MOSQUITO_DATA));
+          }
+          this.updateInspectorUI();
+        });
+      }
+    }
+
+    // Initialize Application on Window Load
+    window.addEventListener('load', () => {
+      lucide.createIcons();
+      window.app = new AnimationStudio();
+    });
+  </script>
+</body>
+</html>
