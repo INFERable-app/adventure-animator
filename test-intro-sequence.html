@@ -554,11 +554,14 @@
       await wait(3.0);
 
       // Step 6: Fade Canvas to White
-      const flareId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
-      fadeOut(subtitle1, 1.0);
-      fadeOut(flareId, 6.0);
-      //canvasFadeTo('white', 6.0);
+      const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
       await wait(3.0);
+      fadeOut(tentTopBrightId, 6.0);
+      const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 6.0);
+      fadeOut(subtitle1, 1.0);
+      fadeOut(tentUpWashedId, 6.0);
+      //canvasFadeTo('white', 6.0);
+      await wait(6.0);
 
       // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
       const tentPovLookingUpId = fadeIn(createImageObject('images/tent-pov-looking-up.png', 800), centerX, centerY, 3.0);
