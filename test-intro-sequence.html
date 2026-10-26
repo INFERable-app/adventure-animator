@@ -262,8 +262,8 @@
         },
         "blueMatTopView": {
           "parts": {
-            "matBody": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 6, "path": [{ "x": -100, "y": -180 }, { "x": 100, "y": -180 }, { "x": 100, "y": 180 }, { "x": -100, "y": 180 }], "radius": 15 },
-            "pillow": { "zIndex": 2, "fill": "#93c5fd", "path": [{ "x": -80, "y": -165 }, { "x": 80, "y": -165 }, { "x": 80, "y": -105 }, { "x": -80, "y": -105 }], "radius": 10 }
+            "matBody": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 6, "path": [{ "x": -100, "y": -180 }, { "x": 100, "y": -180 }, { "x": 100, "y": 160 }, { "x": -100, "y": 160 }], "radius": 15 },
+            "pillow": { "zIndex": 2, "fill": "#93c5fd", "path": [{ "x": -80, "y": -175 }, { "x": 80, "y": -175 }, { "x": 80, "y": -115 }, { "x": -80, "y": -115 }], "radius": 10 }
           }
         },
         "blueMatSideView": {
@@ -590,7 +590,6 @@
       await wait(3.5);
 
       // Step 11: 2D Side Standing View holding PNG Tablet
-      fadeOut(sideMatId, 0);
       fadeOut(toddlerSittingId, 0);
       fadeOut(monitorFloorId, 0);
       const toddlerStandingId = fadeIn(masterGameData.poses.sideViewStandingHold, centerX, centerY + 35, 0);
