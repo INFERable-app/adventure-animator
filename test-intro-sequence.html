@@ -437,11 +437,12 @@
     }
 
     /*
-     * 3. PLAYER HELPER & FADE API
+     * 3. PLAYER HELPER, FADE & AUDIO API
      */
     const activeSprites = new Map();
     let spriteIdCounter = 0;
     let currentAudio = null;
+    let isMuted = false;
 
     function playAudio(srcPath, volume = 1.0) {
       if (currentAudio) {
@@ -450,8 +451,34 @@
       }
       currentAudio = new Audio(srcPath);
       currentAudio.volume = volume;
-      currentAudio.play().catch(err => console.log('Audio playback prevented:', err));
+      currentAudio.muted = isMuted;
+
+      currentAudio.play().catch(err => {
+        console.warn('Autoplay prevented. Click the sound button to enable audio:', err);
+      });
       return currentAudio;
+    }
+
+    function toggleAudio() {
+      const soundBtn = document.getElementById('sound-btn');
+      if (!currentAudio) {
+        isMuted = !isMuted;
+        soundBtn.innerText = isMuted ? '🔇 Sound Off' : '🔊 Sound On';
+        return;
+      }
+
+      // If autoplay was blocked, user gesture will resume playback
+      if (currentAudio.paused) {
+        currentAudio.play().then(() => {
+          isMuted = false;
+          currentAudio.muted = false;
+          soundBtn.innerText = '🔊 Sound On';
+        }).catch(err => console.error('Audio play failed:', err));
+      } else {
+        isMuted = !isMuted;
+        currentAudio.muted = isMuted;
+        soundBtn.innerText = isMuted ? '🔇 Sound Off' : '🔊 Sound On';
+      }
     }
 
     function fadeIn(pose, x, y, seconds) {
@@ -559,7 +586,7 @@
       await wait(3.0);
 
       // Step 4: Audio Starts + Lens Flare PNG Image
-      playAudio('audio/open-your-eyes.m4a'); // <--- Replace with your audio file path
+      playAudio('audio/your-audio-file.mp3'); // <--- Replace with your audio file path
       const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 5);
       await wait(3.0);
 
@@ -672,6 +699,7 @@
     <div id="canvas-container"></div>
     <div class="controls-overlay">
       <button class="control-btn" onclick="playOpeningSequence()">Replay Sequence</button>
+      <button id="sound-btn" class="control-btn" onclick="toggleAudio()">🔊 Sound On</button>
     </div>
   </div>
 
