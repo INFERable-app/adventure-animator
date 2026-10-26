@@ -262,7 +262,7 @@
         },
         "blueMatTopView": {
           "parts": {
-            "matBody": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 6, "path": [{ "x": -100, "y": -120 }, { "x": 100, "y": -120 }, { "x": 100, "y": 40 }, { "x": -100, "y": 40 }], "radius": 15 },
+            "matBody": { "zIndex": 1, "fill": "#2563eb", "stroke": "#1d4ed8", "strokeWidth": 6, "path": [{ "x": -100, "y": -140 }, { "x": 100, "y": -140 }, { "x": 100, "y": 140 }, { "x": -100, "y": 140 }], "radius": 15 },
             "pillow": { "zIndex": 2, "fill": "#93c5fd", "path": [{ "x": -80, "y": -110 }, { "x": 80, "y": -110 }, { "x": 80, "y": -50 }, { "x": -80, "y": -50 }], "radius": 10 }
           }
         },
@@ -586,7 +586,7 @@
       const tentBackBgId2 = fadeIn(createImageObject('images/tent-back.png', 800), centerX, centerY, 0);
       const sideMatId = fadeIn(masterGameData.objects.blueMatSideView, centerX, centerY + 50, 0);
       const toddlerSittingId = fadeIn(masterGameData.poses.sideViewSitting, centerX, centerY + 59, 0);
-      const monitorFloorId = fadeIn(createImageObject('images/tablet-floor.png', 40), centerX - 60, centerY + 119, 0);
+      const monitorFloorId = fadeIn(createImageObject('images/tablet-on-floor.png', 40), centerX - 180, centerY + 119, 0);
       await wait(3.5);
 
       // Step 11: 2D Side Standing View holding PNG Tablet
