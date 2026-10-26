@@ -546,7 +546,7 @@
       await wait(3.0);
 
       // Step 4: Lens Flare PNG Image
-      const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 1.5);
+      const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 2);
       await wait(3,0);
 
       // Step 5: "...Open your eyes..."
@@ -554,19 +554,19 @@
       await wait(3.0);
 
       // Step 6: Fade Canvas to White
+      const flareId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
       fadeOut(subtitle1, 1.0);
       fadeOut(flareId, 6.0);
-      canvasFadeTo('white', 6.0);
+      //canvasFadeTo('white', 6.0);
       await wait(3.0);
 
       // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
       const tentPovLookingUpId = fadeIn(createImageObject('images/tent-pov-looking-up.png', 800), centerX, centerY, 3.0);
-      canvasFadeTo('transparent', 3.0);
+      //canvasFadeTo('transparent', 3.0);
       await wait(3.0);
 
 
       // Step 8: Cut to Top Down Laying View with tent-floor.png Background
-      fadeOut(tentBackId, 0);
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
