@@ -546,7 +546,7 @@
       await wait(3.0);
 
       // Step 5: "...Open your eyes..."
-      const subtitle1 = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 120, 1.2);
+      const subtitle1 = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 220, 1.2);
       await wait(3.0);
       fadeOut(subtitle1, 3.0);
       await wait(1.0);
@@ -565,6 +565,7 @@
       await wait(8.0);
 
       // Step 8: Cut to Top Down Laying View with tent-floor.png Background
+      fadeOut(tentPovLookingUpId, 3.0);
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
