@@ -543,40 +543,49 @@
       await wait(3.0);
 
       // Step 4: Lens Flare PNG Image
-      const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 2);
+      const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 5);
       await wait(3.0);
 
-      // Step 5: "...Open your eyes..."
-      const subtitle1 = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 220, 1.2);
+      // Step 5: "..."
+      const subtitle1 = fadeIn(createTextObject("...", 16), centerX, container.clientHeight - 220, 1.2);
       await wait(3.0);
       fadeOut(subtitle1, 3.0);
-      await wait(1.0);
+      await wait(3.0);
+
+      // Step 5a: "...Open your eyes..."
+      const subtitle1a = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 220, 1.2);
+      await wait(3.0);
+      fadeOut(subtitle1a, 3.0);
+      await wait(3.0);
       
       // Step 6: Fade Canvas to White
       fadeOut(flareId, 3.0);
       const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
       await wait(3.0);
+
+            // Step 7: "Open your eyes." Text
+      const subtitle2 = fadeIn(createTextObject("Open your eyes", 16), centerX, container.clientHeight - 120, 3.0);
+      await wait(3.0);
+      fadeOut(subtitle2, 3.0);
+      await wait(3.0);
+      
       fadeOut(tentTopBrightId, 3.0);
       const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 3.0);
       await wait(3.0);
 
-      // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
+      // Step 8: POV Tent Looking Up -> Cross-fade to Tent Back
       fadeOut(tentUpWashedId, 3.0);
       const tentPovLookingUpId = fadeIn(createImageObject('images/tent-pov-looking-up.png', 800), centerX, centerY, 3.0);
       await wait(8.0);
 
-      // Step 8: Cut to Top Down Laying View with tent-floor.png Background
+      // Step 9: Cut to Top Down Laying View with tent-floor.png Background
       fadeOut(tentPovLookingUpId, 3.0);
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
       await wait(6.0);
 
-      // Step 9: "Wake up." Text
-      const subtitle2 = fadeIn(createTextObject("Wake up.", 16), centerX, container.clientHeight - 120, 3.0);
-      await wait(3.0);
-      fadeOut(subtitle2, 3.0);
-      await wait(3.0);
+
       
       // Step 10: 2D Side Sitting View with PNG Tablet on Floor
       fadeOut(topMatId, 0);
