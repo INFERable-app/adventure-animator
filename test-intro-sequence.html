@@ -561,12 +561,9 @@
 
       // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
       const tentPovLookingUpId = fadeIn(createImageObject('images/tent-pov-looking-up.png', 800), centerX, centerY, 3.0);
-      canvasFadeTo('transparent', 1.2);
-      await wait(1.5);
+      canvasFadeTo('transparent', 3.0);
+      await wait(3.0);
 
-      const tentBackId = fadeIn(createImageObject('images/tent-back.png', 800), centerX, centerY, 1.5);
-      fadeOut(tentPovLookingUpId, 1.5);
-      await wait(2.0);
 
       // Step 8: Cut to Top Down Laying View with tent-floor.png Background
       fadeOut(tentBackId, 0);
@@ -579,25 +576,24 @@
       const subtitle2 = fadeIn(createTextObject("Wake up.", 16), centerX, container.clientHeight - 120, 3.0);
       await wait(3.0);
       fadeOut(subtitle2, 3.0);
+      await wait(3.0);
       
       // Step 10: 2D Side Sitting View with tent-floor.png Background
-      fadeOut(tentFloorBgId1, 0);
       fadeOut(topMatId, 0);
       fadeOut(toddlerLayingId, 0);
+      fadeOut(tentFloorBgId1, 0);
 
       const tentBackBgId2 = fadeIn(createImageObject('images/tent-back.png', 800), centerX, centerY, 0);
       const sideMatId = fadeIn(masterGameData.objects.blueMatSideView, centerX, centerY + 50, 0);
       const toddlerSittingId = fadeIn(masterGameData.poses.sideViewSitting, centerX, centerY + 59, 0);
       const monitorFloorId = fadeIn(masterGameData.objects.babyMonitor, centerX - 60, centerY + 119, 0);
-      await wait(2.5);
+      await wait(3.5);
 
       // Step 11: 2D Side Standing View holding Monitor with tent-back.png Background
 
       fadeOut(sideMatId, 0);
       fadeOut(toddlerSittingId, 0);
       fadeOut(monitorFloorId, 0);
-
-
       const toddlerStandingId = fadeIn(masterGameData.poses.sideViewStandingHold, centerX, centerY + 35, 0);
       const monitorHandId = fadeIn(masterGameData.objects.babyMonitor, centerX - 42, centerY + 50, 0);
     }
