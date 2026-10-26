@@ -273,13 +273,9 @@
           }
         },
         "babyMonitor": {
-          "parts": {
-            "handle": { "zIndex": 1, "stroke": "#475569", "strokeWidth": 4, "fill": "transparent", "path": [{ "x": -15, "y": -22 }, { "x": 0, "y": -35 }, { "x": 15, "y": -22 }] },
-            "casing": { "zIndex": 2, "fill": "#334155", "stroke": "#f59e0b", "strokeWidth": 3, "path": [{ "x": -20, "y": -20 }, { "x": 20, "y": -20 }, { "x": 20, "y": 25 }, { "x": -20, "y": 25 }], "radius": 6 },
-            "screen": { "zIndex": 3, "fill": "#38bdf8", "path": [{ "x": -15, "y": -15 }, { "x": 15, "y": -15 }, { "x": 15, "y": 10 }, { "x": -15, "y": 10 }] },
-            "eyeIcon": { "zIndex": 4, "fill": "#0284c7", "type": "circle", "cx": 0, "cy": -2, "r": 5 },
-            "antenna": { "zIndex": 1, "stroke": "#f59e0b", "strokeWidth": 3, "path": [{ "x": 14, "y": -20 }, { "x": 22, "y": -38 }] }
-          }
+          "type": "image",
+          "src": "images/baby-monitor.png",
+          "width": 40
         }
       },
       "poses": {
@@ -547,7 +543,7 @@
 
       // Step 4: Lens Flare PNG Image
       const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 2);
-      await wait(3,0);
+      await wait(3.0);
 
       // Step 5: "...Open your eyes..."
       const subtitle1 = fadeIn(createTextObject("...Open your eyes...", 16), centerX, container.clientHeight - 120, 1.2);
@@ -556,23 +552,19 @@
       await wait(1.0);
       
       // Step 6: Fade Canvas to White
-      fadeOut(flareId, 1.0);
-      const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 1.0);
-      await wait(1.0);
-      fadeOut(tentTopBrightId, 1.0);
-      const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 1.0);
-      //canvasFadeTo('white', 6.0);
-      await wait(2.0);
+      fadeOut(flareId, 3.0);
+      const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
+      await wait(3.0);
+      fadeOut(tentTopBrightId, 3.0);
+      const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 3.0);
+      await wait(3.0);
 
       // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
       fadeOut(tentUpWashedId, 3.0);
       const tentPovLookingUpId = fadeIn(createImageObject('images/tent-pov-looking-up.png', 800), centerX, centerY, 3.0);
-      //canvasFadeTo('transparent', 3.0);
       await wait(8.0);
 
-
       // Step 8: Cut to Top Down Laying View with tent-floor.png Background
-      fadeOut(tentPovLookingUpId, 0);
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
@@ -584,7 +576,7 @@
       fadeOut(subtitle2, 3.0);
       await wait(3.0);
       
-      // Step 10: 2D Side Sitting View with tent-floor.png Background
+      // Step 10: 2D Side Sitting View with PNG Baby Monitor on Floor
       fadeOut(topMatId, 0);
       fadeOut(toddlerLayingId, 0);
       fadeOut(tentFloorBgId1, 0);
@@ -592,16 +584,15 @@
       const tentBackBgId2 = fadeIn(createImageObject('images/tent-back.png', 800), centerX, centerY, 0);
       const sideMatId = fadeIn(masterGameData.objects.blueMatSideView, centerX, centerY + 50, 0);
       const toddlerSittingId = fadeIn(masterGameData.poses.sideViewSitting, centerX, centerY + 59, 0);
-      const monitorFloorId = fadeIn(masterGameData.objects.babyMonitor, centerX - 60, centerY + 119, 0);
+      const monitorFloorId = fadeIn(createImageObject('images/baby-monitor.png', 40), centerX - 60, centerY + 119, 0);
       await wait(3.5);
 
-      // Step 11: 2D Side Standing View holding Monitor with tent-back.png Background
-
+      // Step 11: 2D Side Standing View holding PNG Baby Monitor
       fadeOut(sideMatId, 0);
       fadeOut(toddlerSittingId, 0);
       fadeOut(monitorFloorId, 0);
       const toddlerStandingId = fadeIn(masterGameData.poses.sideViewStandingHold, centerX, centerY + 35, 0);
-      const monitorHandId = fadeIn(masterGameData.objects.babyMonitor, centerX - 42, centerY + 50, 0);
+      const monitorHandId = fadeIn(createImageObject('images/baby-monitor.png', 35), centerX - 42, centerY + 50, 0);
     }
 
     /*
