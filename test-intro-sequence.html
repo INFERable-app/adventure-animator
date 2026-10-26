@@ -573,17 +573,17 @@
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
-      await wait(3.0);
+      await wait(6.0);
 
       // Step 9: "Wake up." Text
       const subtitle2 = fadeIn(createTextObject("Wake up.", 16), centerX, container.clientHeight - 120, 3.0);
       await wait(3.0);
-
+      fadeOut(subtitle2, 3.0);
+      
       // Step 10: 2D Side Sitting View with tent-floor.png Background
       fadeOut(tentFloorBgId1, 0);
       fadeOut(topMatId, 0);
       fadeOut(toddlerLayingId, 0);
-      fadeOut(subtitle2, 0);
 
       const tentBackBgId2 = fadeIn(createImageObject('images/tent-back.png', 800), centerX, centerY, 0);
       const sideMatId = fadeIn(masterGameData.objects.blueMatSideView, centerX, centerY + 50, 0);
