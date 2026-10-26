@@ -441,6 +441,18 @@
      */
     const activeSprites = new Map();
     let spriteIdCounter = 0;
+    let currentAudio = null;
+
+    function playAudio(srcPath, volume = 1.0) {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+      currentAudio = new Audio(srcPath);
+      currentAudio.volume = volume;
+      currentAudio.play().catch(err => console.log('Audio playback prevented:', err));
+      return currentAudio;
+    }
 
     function fadeIn(pose, x, y, seconds) {
       const spriteId = 'sprite_' + (++spriteIdCounter);
@@ -521,6 +533,10 @@
      */
     async function playOpeningSequence() {
       clearCanvas();
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
 
       const container = document.getElementById('canvas-container');
       const centerX = container.clientWidth / 2;
@@ -542,7 +558,8 @@
       fadeOut(title2, 0.8);
       await wait(3.0);
 
-      // Step 4: Lens Flare PNG Image
+      // Step 4: Audio Starts + Lens Flare PNG Image
+      playAudio('audio/open-your-eyes.m4a'); // <--- Replace with your audio file path
       const flareId = fadeIn(createImageObject('images/lens-flare.png', 800), centerX, centerY, 5);
       await wait(3.0);
 
@@ -563,7 +580,7 @@
       const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
       await wait(3.0);
 
-            // Step 7: "Open your eyes." Text
+      // Step 7: "Open your eyes." Text
       const subtitle2 = fadeIn(createTextObject("Open your eyes", 16), centerX, container.clientHeight - 120, 3.0);
       await wait(3.0);
       fadeOut(subtitle2, 3.0);
@@ -585,8 +602,6 @@
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
       await wait(6.0);
 
-
-      
       // Step 10: 2D Side Sitting View with PNG Tablet on Floor
       fadeOut(topMatId, 0);
       fadeOut(toddlerLayingId, 0);
