@@ -556,13 +556,13 @@
       await wait(1.0);
       
       // Step 6: Fade Canvas to White
-      fadeOut(flareId, 3.0);
-      const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 3.0);
-      await wait(3.0);
-      fadeOut(tentTopBrightId, 3.0);
-      const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 3.0);
+      fadeOut(flareId, 1.0);
+      const tentTopBrightId = fadeIn(createImageObject('images/tent-top-bright.png', 800), centerX, centerY, 1.0);
+      await wait(1.0);
+      fadeOut(tentTopBrightId, 1.0);
+      const tentUpWashedId = fadeIn(createImageObject('images/tent-pov-looking-up-washed-out2.png', 800), centerX, centerY, 1.0);
       //canvasFadeTo('white', 6.0);
-      await wait(3.0);
+      await wait(2.0);
 
       // Step 7: POV Tent Looking Up -> Cross-fade to Tent Back
       fadeOut(tentUpWashedId, 3.0);
@@ -572,6 +572,7 @@
 
 
       // Step 8: Cut to Top Down Laying View with tent-floor.png Background
+      fadeOut(tentPovLookingUpId, 0);
       const tentFloorBgId1 = fadeIn(createImageObject('images/tent-floor.png', 800), centerX, centerY, 0);
       const topMatId = fadeIn(masterGameData.objects.blueMatTopView, centerX, centerY, 0);
       const toddlerLayingId = fadeIn(masterGameData.poses.topDownLaying, centerX, centerY, 0);
